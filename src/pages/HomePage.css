@@ -1,0 +1,84 @@
+.outer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+}
+
+.header {
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+
+    --hue: 140;
+    --sat: 0.32;
+    --glow-intensity: 0.7;
+
+    --fg: oklch(15% calc(var(--sat) * 0.5) var(--hue));
+    --bg: oklch(75% var(--sat) var(--hue) / 0.8);
+    --bg-dark: oklch(45% var(--sat) var(--hue) / 0.75);
+    --top-glow: radial-gradient(
+        ellipse 100% 60% at top center,
+        rgba(255, 255, 255, var(--glow-intensity)),
+        transparent 70%
+    );
+  
+    background-color: var(--bg);
+    background: 
+        var(--top-glow),
+        linear-gradient(to bottom, var(--bg), var(--bg-dark));
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 35px;
+    font-weight: bold;
+    color: white;
+}
+
+.leaf-logo {
+    width: 90px;
+    height: auto;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin: 0;
+    overflow: hidden;
+}
+
+.navbar {
+  display: flex;
+  justify-content: center;
+  gap: 20px !important;
+  padding: 10px 20px !important;
+  background-color: rgb(0, 0, 0, 0.4);
+  border-radius: 0 !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+  width: 100%;
+  
+}
+
+.navbar .nav-link {
+  font-size: 18px;
+  font-weight: 500;
+  color: #fff4de !important;
+  text-decoration: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.navbar .nav-link:hover {
+  color: #ff9a1e !important;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 30px;
+}

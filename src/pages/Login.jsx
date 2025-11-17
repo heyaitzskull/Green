@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient.js";
 import "./Login.css";
+import leafLogo from "../assets/leaf-logo.png"
 
 const Login = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingLogin, setLoadingLogin] = useState(false);
+  const [loadingSignup, setLoadingSignup] = useState(false);
+  const [user, setUser] = useState(null)
   const navigate = useNavigate();
 
    //if user is already logged in, redirect to homepage
@@ -22,19 +25,71 @@ const Login = ({ setIsLoggedIn }) => {
     checkSession();
   }, [navigate, setIsLoggedIn]);
 
+  
+    const handleSignup = async () => {
+        setErr("");
+
+        //validate input
+        if (!email) return setErr("Email is required.");
+        if (!password) return setErr("Password is required.");
+
+        setLoadingSignup(true);
+
+        try {
+
+        //check if email already exists via RPC
+        const { data: exists, error: rpcError } = await supabase.rpc(
+            "is_email_exist",
+            { p_email: email }
+        );
+
+        if (rpcError) {
+            setLoadingSignup(false);
+            return setErr(rpcError.message);
+        }
+
+        if (exists) {
+            setLoadingSignup(false);
+            return setErr("This email is already registered. Please log in.");
+        }
+
+        //sign up user with Supabase Auth
+        const { data: authData, error: signupError } = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (signupError) {
+            setLoadingSignup(false);
+            return setErr(signupError.message);
+        }
+
+        const newUser = authData.user;
+
+
+        setUser(newUser);
+        setLoadingSignup(false);
+
+        } catch (error) {
+            setErr("An unexpected error occurred.");
+            setLoadingSignup(false);
+        }
+        
+    };
+
 
   const handleLogin = async () => {
     setErr("");
     if (!email) return setErr("Email is required.");
     if (!password) return setErr("Password is required.");
-    setLoading(true);
+    setLoadingLogin(true);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    setLoading(false);
+    setLoadingLogin(false);
 
     if (error) return setErr(error.message);
 
@@ -46,35 +101,47 @@ const Login = ({ setIsLoggedIn }) => {
   };
 
   return (
-    <div className="main-container">
-      <div className="card">
-        <h2>React Supabase Login</h2>
-        {err && <p className="signup-err">{err}</p>}
+    <div className="outer">
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <div className="button-group">
-          <button className="login" onClick={handleLogin} disabled={loading}>
-            {loading ? "Loading..." : "Login"}
-          </button>
+        <div className="header">
+            <img className="leaf-logo" src={leafLogo} alt="Logo" />
+            <h1>The Environmental Post</h1>
         </div>
 
-        <p>
-          Don't have an account? <Link to="/signup">Sign up</Link>
-        </p>
-      </div>
+        <div className="main-container">
+            
+        <div className="card">
+            <h2>Login</h2>
+            {err && <p className="signup-err">{err}</p>}
+            {!loadingSignup && user && <p className='confirm-email'>Please confirm your email in order to log in</p>}
+
+
+            <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <div className="button-group">
+            <button className="login" onClick={handleLogin} disabled={loadingLogin}>
+                {loadingLogin ? "Loading..." : "Login"}
+            </button>
+            <button className='signup' onClick={handleSignup} disabled={loadingSignup}> 
+                    {loadingSignup ? "Loading..." : "Sign Up" }
+                </button>
+            </div>
+
+
+        </div>
+        </div>
     </div>
   );
 };

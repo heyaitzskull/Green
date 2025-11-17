@@ -1,201 +1,114 @@
-/* Reset default browser styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+.container {
+    width: 100%;
+    height: 100%;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    flex-direction: column;
+    background: none;
 }
 
-/* Container to center everything */
-.main-container {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-items: center;
-  background: none
+.title {
+  text-align: center;
+  width: 70%;
+
+  margin: 0px;
+  margin-bottom: 0px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px, solid, black;
+  min-height: 60px;
+  font-size: 30px;
+  font-weight: 100;
+  
+  /* Frutiger Aero gradient - glossy, bright, and reflective */
+  background: linear-gradient(
+    to bottom,
+    #bec1c2 0%,      /* Light cyan/aqua at top */
+    /* #a0a0a0 40%,     Bright aqua */
+    #60879e 40%,     /* Medium cyan */
+    /* #656565 10%,     Deeper cyan */
+    #517284 50%,     /* Rich cyan */
+    #325e82 100%     /* Dark cyan at bottom */
+  );
+  
+  /* Optional: Add a glossy shine effect at the top */
+  position: relative;
+  overflow: hidden;
+  
+  color: rgb(255, 255, 255);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.header {
-    padding: 20px 30px;
+/* Optional: Add the glossy shine overlay */
+.title::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height:40%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.1)
+  );
+  border-radius: 10px 10px 0 0;
+  pointer-events: none;
+}
+
+.inputs {
+    /* background: linear-gradient(to bottom,
+        #c5f6ff 0%, 
+        #1f87bf 55%,
+        #006c9a 65%,
+        #adefab 100%
+    ); */
+    background-color: white;
+    border: 0px solid black;
     display: flex;
     align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-
-    --hue: 140;
-    --sat: 0.32;
-    --glow-intensity: 0.7;
-
-    --fg: oklch(15% calc(var(--sat) * 0.5) var(--hue));
-    --bg: oklch(75% var(--sat) var(--hue) / 0.8);
-    --bg-dark: oklch(45% var(--sat) var(--hue) / 0.75);
-    --top-glow: radial-gradient(
-        ellipse 100% 60% at top center,
-        rgba(255, 255, 255, var(--glow-intensity)),
-        transparent 70%
-    );
-  
-    background-color: var(--bg);
-    background: 
-        var(--top-glow),
-        linear-gradient(to bottom, var(--bg), var(--bg-dark));
+    justify-content: center;
+    position: relative;
+    height: 500px;
+    margin-top: 50px;
+    margin-bottom: 100px;
+    flex-direction: column;
+    width: 500px;
+    border-radius: 20px;
+    box-shadow: 0px 10px 5px rgba(0, 0, 0, 0.5);
 }
 
-.header h1 {
-    margin: 0;
-    font-size: 35px;
-    font-weight: bold;
-    color: white;
+.req {
+    color: red;
+    text-align: left;
 }
 
-.leaf-logo {
-    width: 90px;
-    height: auto;
-}
-
-/* Card box */
-.card {
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 400px;
-  min-height: 350px;
-  text-align: center;
-  margin-bottom: 50px;
-}
-
-/* Title */
-.card h2 {
-  margin-bottom: 1.5rem;
-  color: #333;
-}
-
-/* Input fields */
-.card input {
+.text {
+  height: 40px;
   width: 100%;
-  padding: 0.8rem;
-  margin: 0.5rem 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 5px;
+  border-radius: 10px;
+  font-size: 20px;
 }
 
-/* Button container */
-.button-group {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
+.input-container {
+    margin-top: 10px;
 }
 
-/* Buttons */
-button {
-  flex: 1;
-  margin: 0 0.25rem;
-  padding: 0.8rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.signup-err, .confirm-email{
-  color: red;
-}
-
-button:disabled {
-  cursor: not-allowed;
+.input-container p {
+    margin-top: 10px;
+    font-size: 20px;
+    /* font-weight: 100; */
 }
 
 
 /* Authentic Frutiger Aero Button CSS */
-.signup {
+.frutiger-aero-button {
   /* OKLCH Color System for accurate colors */
   --hue: 140;
   --sat: 0.32;
-  --glow-intensity: 0.7;
-  
-  /* Color Variables */
-  --fg: oklch(15% calc(var(--sat) * 0.5) var(--hue));
-  --bg: oklch(75% var(--sat) var(--hue) / 0.8);
-  --bg-dark: oklch(45% var(--sat) var(--hue) / 0.75);
-  --bottom-glow: radial-gradient(
-    farthest-corner at bottom center,
-    rgba(255, 255, 255, var(--glow-intensity)),
-    transparent
-  );
-  
-  /* Base Styling */
-  background-color: var(--bg);
-  background: 
-    var(--bottom-glow),
-    linear-gradient(to bottom, var(--bg-dark), var(--bg));
-  
-  border: 1px solid var(--bg);
-  border-radius: 9999px;
-  
-  /* Shadows and Effects */
-  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.4);
-  
-  /* Typography */
-  color: var(--fg);
-  font-family: "Lucida Grande", "Lucida Sans Unicode", "Segoe UI", system-ui, sans-serif;
-  font-weight: 700;
-  text-shadow: 5px 2px 0.5em rgba(0, 0, 0, 0.2);
-  
-  /* Layout */
-  cursor: pointer;
-  position: relative;
-  transition: all 300ms ease;
-  
-  /* Prevent text selection */
-  user-select: none;
-  -webkit-user-select: none;
-  min-width: 100px;
-  max-width: 150px;
-  margin-top: 20px;
-  max-height: 50px;
-  color: rgb(0, 71, 0);
-
-}
-
-/* Top Highlight Effect */
-.signup::after {
-  content: "";
-  position: absolute;
-  top: 4%;
-  left: 0.75em;
-  width: calc(100% - 1.5em);
-  height: 40%;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.8),
-    rgba(255, 255, 255, 0.1)
-  );
-  border-radius: inherit;
-  transition: background 400ms ease;
-  pointer-events: none;
-}
-
-/* Hover State */
-.signup:hover {
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
-  transform: translateY(-3px);
-}
-
-/* Active State */
-.signup:active {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  transform: translateY(5px);
-}
-
-.login {
-  /* OKLCH Color System for accurate colors */
-  --hue: 218;
-  --sat: 0.44;
   --glow-intensity: 0.7;
   
   /* Color Variables */
@@ -238,11 +151,10 @@ button:disabled {
   max-width: 150px;
   margin-top: 20px;
   max-height: 50px;
-  color: rgb(54, 54, 255);
 }
 
 /* Top Highlight Effect */
-.login::after {
+.frutiger-aero-button::after {
   content: "";
   position: absolute;
   top: 4%;
@@ -260,14 +172,91 @@ button:disabled {
 }
 
 /* Hover State */
-.login:hover,
-.login:focus {
+.frutiger-aero-button:hover {
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
-  transform: translateY(-1px);
+  transform: translateY(-3px);
 }
 
 /* Active State */
-.login:active {
+.frutiger-aero-button:active {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  transform: translateY(1px);
+  transform: translateY(5px);
+}
+
+.frutiger-aero-button-logout {
+  /* OKLCH Color System for accurate colors */
+  --hue: 30;
+  --sat: 0.24;
+  --glow-intensity: 0.7;
+  
+  /* Color Variables */
+  --fg: oklch(15% calc(var(--sat) * 0.5) var(--hue));
+  --bg: oklch(75% var(--sat) var(--hue) / 0.8);
+  --bg-dark: oklch(45% var(--sat) var(--hue) / 0.75);
+  --bottom-glow: radial-gradient(
+    farthest-corner at bottom center,
+    rgba(255, 255, 255, var(--glow-intensity)),
+    transparent
+  );
+  
+  /* Base Styling */
+  background-color: var(--bg);
+  background: 
+    var(--bottom-glow),
+    linear-gradient(to bottom, var(--bg-dark), var(--bg));
+  
+  border: 1px solid var(--bg);
+  border-radius: 9999px;
+  
+  /* Shadows and Effects */
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.4);
+  
+  /* Typography */
+  color: var(--fg);
+  font-family: "Lucida Grande", "Lucida Sans Unicode", "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+  text-shadow: 0 2px 0.5em rgba(0, 0, 0, 0.2);
+  
+  /* Layout */
+  cursor: pointer;
+  position: relative;
+  transition: all 300ms ease;
+  
+  /* Prevent text selection */
+  user-select: none;
+  -webkit-user-select: none;
+  min-width: 100px;
+  max-width: 150px;
+  margin-top: 20px;
+  max-height: 50px;
+}
+
+/* Top Highlight Effect */
+.frutiger-aero-button-logout::after {
+  content: "";
+  position: absolute;
+  top: 4%;
+  left: 0.75em;
+  width: calc(100% - 1.5em);
+  height: 40%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.1)
+  );
+  border-radius: inherit;
+  transition: background 400ms ease;
+  pointer-events: none;
+}
+
+/* Hover State */
+.frutiger-aero-button-logout:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+  transform: translateY(-3px);
+}
+
+/* Active State */
+.frutiger-aero-button-logout:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(5px);
 }

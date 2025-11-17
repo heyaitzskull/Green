@@ -1,27 +1,31 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
+import "./CreateProfile.css"
+import leafLogo from "../assets/leaf-logo.png"
 
-const CreateProfile= () => {
+const CreateProfile = () => {
   const [profileExist, setProfileExist] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+
   const [username, setUsername] = useState("");
-  const [name, setName] = useState(null);
-//   const [email, setEmail] = useState("");
-//   const [validEmail, setValidEmail] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(null);
-  const [bio, setBio] = useState(null);
+  const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [bio, setBio] = useState("");
 
   const [err, setErr] = useState("");
   const navigate = useNavigate();
 
-  //get current user ID
-  const getUserId = () => supabase.auth.getUser().then(res => res.data.user?.id);
+  const getUserId = () =>
+    supabase.auth.getUser().then((res) => res.data.user?.id);
 
-  //check if profile exists
   const checkProfile = async () => {
     const userId = await getUserId();
-    if (!userId) return;
+    if (!userId) {
+      setPageLoading(false);
+      return;
+    }
 
     const { data } = await supabase
       .from("profiles")
@@ -29,13 +33,29 @@ const CreateProfile= () => {
       .eq("id", userId)
       .single();
 
-    setProfileExist(!!data);
+    if (data) {
+      //profile exists, now redirect immediately without rendering
+      navigate("/homepage", { replace: true });
+      return;
+    }
+
+    //no profile, render the form
+    setProfileExist(false);
+    setPageLoading(false);
   };
 
-  //create profile
+  useEffect(() => {
+    checkProfile();
+  }, []);
+
   const handleCreateProfile = async () => {
     if (!username) {
       setErr("Username is required");
+      return;
+    }
+
+    if (/\s/.test(username)) {
+      setErr("Username cannot contain spaces");
       return;
     }
 
@@ -48,22 +68,26 @@ const CreateProfile= () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .insert({ id: userId, username: username, name: name, bio:bio, phone_number: phoneNumber});
+    const { error } = await supabase.from("profiles").insert({
+      id: userId,
+      username,
+      name,
+      bio,
+      phone_number: phoneNumber,
+    });
 
     setLoading(false);
 
     if (error) {
       if (error.code === "23505") {
-        setErr("Username already taken");
+        setErr("That username is already taken. Please choose another.");
       } else {
-        setErr(error.message);
+        setErr("Something went wrong. Please try again.");
       }
       return;
     }
 
-    setProfileExist(true);
+    navigate("/homepage");
   };
 
   const handleLogout = async () => {
@@ -74,69 +98,79 @@ const CreateProfile= () => {
     navigate("/login");
   };
 
-useEffect(() => {
-  checkProfile();
-
-  if (profileExist) {
-    navigate("/homepage");
+  if (pageLoading) {
+    return <h2>Loading...</h2>;
   }
-}, [profileExist, navigate]);
-
-//   if ([page is loading] === null) {
-//     return <div>Loading...</div>;
-//   }
 
   return (
-    <div>
-      <div>
-          <h1>Create your profile</h1>
+    <div className="outer">
 
-          <div>
-            Required: 
-            {err && <p style={{ color: "red" }}>{err}</p>}
-            <input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-            
-            />
-            
-         </div>
+      <div className="header">
+          <img className="leaf-logo" src={leafLogo} alt="Logo" />
+          <h1>The Environmental Post</h1>
+      </div>
+    <div class='container'>
+      <h1 class="title">First, let's create your profile</h1>
+      <div class="inputs">
+        {err && <p style={{ color: "red"}}>{err}</p>}
 
-        <div>
-            Optional:
-
-            <input
-                type="text"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-            />
-
-            <input
-                type="text"
-                placeholder="Phone Number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-            />
-
-            <input
-                type="text"
-                placeholder="Bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-            />
-          </div>
-
-          <button onClick={handleCreateProfile} disabled={loading}>
-            {loading ? "Loading..." : "Save"}
-          </button>
-          <button onClick={handleLogout} disabled={loading}>
-            {loading ? "Loading..." : "Logout"}
-          </button>
+      <div className="input-container">
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <p style={{ color: "red"}} > *</p>
+          <p> Username:</p>
         </div>
-      
+        <input
+          className="text"
+          type="text"
+          placeholder="Start typing..."
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+      </div>
+
+      <div className="input-container">
+        <p>Name</p>
+        <input
+          className="text"
+          type="text"
+          placeholder="Start typing..."
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+
+      <div className="input-container">
+        <p>Phone Number</p>
+        <input
+          className="text"
+          type="text"
+          placeholder="(123) 456-789"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+        />
+      </div>
+
+      <div className="input-container">
+        <p>Bio</p>
+        <input
+          className="text"
+          type="text"
+          placeholder="Start typing..."
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <button class="frutiger-aero-button"onClick={handleCreateProfile} disabled={loading}>
+          {loading ? "Saving..." : "Save"}
+        </button>
+        <button class="frutiger-aero-button-logout" onClick={handleLogout} disabled={loading}>
+          {loading ? "Loading..." : "Logout"}
+        </button>
+        </div>
+      </div>
+    </div>
     </div>
   );
 };

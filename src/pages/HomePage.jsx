@@ -1,40 +1,37 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
+import "./HomePage.css"
+import Nav from 'react-bootstrap/Nav';
+import leafLogo from "../assets/leaf-logo.png"
 
 const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [username, setUsername] = useState(""); //store username directly
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  //Get current user profile
-  const getUser = async () => {
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
 
-    //getting user info from auth
-    const { data: userData, error } = await supabase.auth.getUser();
-    if (error) {
-      setErr(error.message);
-      return;
-    }
+      if (!authUser) {
+        navigate("/login");
+        return;
+      }
 
-    //storing auth user's id
-    const userId = userData.user.id;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser.id)
+        .single();
 
-    //getting the matching user from profiles table
-    const { data, error: profileError } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", userId)
-      .single();
+      if (error) console.log(error);
+      else setUser(data);
+    };
 
-    if (profileError) {
-      setErr(profileError.message);
-      return;
-    }
-
-    setUsername(data.username);
-  };
+    fetchUser();
+  }, []);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -44,17 +41,34 @@ const HomePage = () => {
     navigate("/login");
   };
 
-  useEffect(() => {
-    getUser();
-  }, []);
+   if (!user) {
+    return <h2>Loading...</h2>;
+  }
 
   return (
-    <div>
-      <h1>Ayyyy {username}, you made it!</h1>
-      {err && <p style={{ color: "red" }}>{err}</p>}
-      <button onClick={handleLogout} disabled={loading}>
-        {loading ? "Loading..." : "Logout"}
-      </button>
+    <div className="outer">
+
+      <div className="header">
+          <img className="leaf-logo" src={leafLogo} alt="Logo" />
+          <h1>The Environmental Post</h1>
+      </div>
+
+      <div className="main-container">
+        <Nav className="navbar">
+          <Nav.Link href="/homepage">Feed</Nav.Link>
+          <Nav.Link href="/addpost">Add Post</Nav.Link>
+          <Nav.Link href="/profilepage">Profile</Nav.Link>
+          <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
+        </Nav>
+
+        <div className="page-content">
+          {user ? (
+            <h1>Ayyyy {user.username}, you made it!</h1>
+          ) : (
+            <h2>Loading...</h2>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

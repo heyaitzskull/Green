@@ -6,19 +6,23 @@ import SignUp from "./pages/Signup";
 import CreateProfile from "./pages/CreateProfile";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import HomePage from "./pages/Homepage";
+import AddPost from "./pages/AddPost"
+import ProfilePage from "./pages/ProfilePage"
 import { supabase } from "./lib/supabaseClient";
+import leafLogo from "./assets/leaf-logo.png"
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(null); // null = not checked yet
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
-  // Check session on app load
   useEffect(() => {
-    const getSession = async () => {
+    const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsLoggedIn(!!session);
+      setAuthReady(true);
     };
 
-    getSession();
+    init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
@@ -27,10 +31,14 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show nothing (or spinner) while checking session
   if (isLoggedIn === null) {
     return <div>Loading...</div>;
   }
+
+  if (!authReady) {
+    return <div>Loading...</div>;
+  }
+  
 
   const element = useRoutes([
     {
@@ -54,12 +62,21 @@ function App() {
       ),
     },
     {
-      path: "/signup",
-      element: <SignUp />,
+      path: "/addpost",
+      element: <AddPost />,
     },
+    {
+      path: "/profilepage",
+      element: <ProfilePage />,
+    },
+    
   ]);
 
-  return <div className="content">{element}</div>;
+  return (
+    <div className="main-content">
+      {element}
+    </div>
+  );
 }
 
 export default App;
