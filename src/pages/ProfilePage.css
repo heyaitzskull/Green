@@ -1,0 +1,72 @@
+/* ProfilePage specific styles */
+.profile-outer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+}
+
+.profile-page-content {
+    padding: 20px;
+    overflow-y: auto;
+    background-color: aliceblue;
+    height:100%;
+}
+
+.profile-info {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.profile-info p {
+    margin: 10px 0;
+}
+
+.activity-tabs {
+    display: flex;
+    /* gap: 10px; */
+    margin-bottom: 20px;
+}
+
+.activity-tab {
+    padding: 10px 20px;
+    background: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.activity-tab.active {
+    background: #4caf50;
+    color: white;
+}
+
+.activity-tab:hover {
+    background: #e0e0e0;
+}
+
+.activity-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+
+}
+.profile-card {
+  height: 300px;
+  width: 300px;
+  margin: 0px !important;
+  border-radius: 0px;
+  padding: 0px !important;
+  /* border: 3px solid rgb(212, 212, 212); */
+ 
+  box-shadow:none;
+  overflow: hidden;
+  background-color: rgb(255, 255, 255);
+  /* transition: transform 0.2s, box-shadow 0.2s; */
+  /* margin-top: 10px; */
+}

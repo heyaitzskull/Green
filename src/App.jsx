@@ -8,6 +8,7 @@ import ProtectedRoute from "./pages/ProtectedRoute";
 import HomePage from "./pages/Homepage";
 import AddPost from "./pages/AddPost"
 import ProfilePage from "./pages/ProfilePage"
+import PostView from "./pages/PostView"
 import { supabase } from "./lib/supabaseClient";
 import leafLogo from "./assets/leaf-logo.png"
 
@@ -32,11 +33,12 @@ function App() {
   }, []);
 
   if (isLoggedIn === null) {
-    return <div>Loading...</div>;
+    return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
+
   }
 
   if (!authReady) {
-    return <div>Loading...</div>;
+    return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
   }
   
 
@@ -69,6 +71,11 @@ function App() {
       path: "/profilepage",
       element: <ProfilePage />,
     },
+    {
+      path: "/postview/:postId",
+      element: <PostView />,
+    },
+
     
   ]);
 
