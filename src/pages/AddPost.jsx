@@ -198,9 +198,8 @@ const AddPost = () => {
 
                         <br/>
                         <br/>
-                        <br/>
-                        <br/>
-                        <button type="submit" disabled={loading}>
+                        
+                        <button className="submit" type="submit" disabled={loading}>
                             {loading ? "Loading..." : "Create Post"}
                         </button>
                     </form>

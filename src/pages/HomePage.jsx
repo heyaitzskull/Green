@@ -229,20 +229,20 @@ const HomePage = () => {
               return (
                 
                 <Link to={`/postview/${post.id}`} className="card-link">
-                <Card key={post.id} className="card">
+                <Card key={post.id} className="homepage-card">
                   <Card.Body>
-                    <Card.Title>{post.title}</Card.Title>
+                    <Card.Title><strong>{post.title}</strong></Card.Title>
                     
-                    <p><strong>Location:</strong> {post.location}</p>
-                    <p><strong>Scale:</strong> {post.scale}</p>
+                    {/* <p><strong>Location:</strong> {post.location}</p> */}
+                    {/* <p><strong>Scale:</strong> {post.scale}</p> */}
 
-                    {post.image_url && (
-                      <img
+                    {/* {post.image_url && (
+                      <ia
                         src={post.image_url}
                         alt="Post"
                         style={{ width: "200px", height:"200px", borderRadius: "8px", marginTop: "10px", objectFit: "cover"}}
                       />
-                    )}
+                    )} */}
 
                     <p>{new Date(post.created_at).toLocaleString()}</p>
                     

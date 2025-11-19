@@ -5,7 +5,7 @@
     min-height: 100vh; /* Fill full screen */
     width: 100%;
     margin: 0;
-    overflow-y: auto;
+    
 }
 
 .page-content {
@@ -20,6 +20,7 @@
     background-color: rgb(240, 248, 255);
     width: 100%;         
     box-sizing: border-box;
+    overflow-y: auto;
     
 }
 
@@ -33,14 +34,14 @@
     background-color: aliceblue;
 }
 
-.card {
-  width: 100%;
+.homepage-card {
+  min-height: auto;
   width: 300px;
   margin: 15px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   overflow: hidden;
-  background-color: rgb(210, 210, 210);
+  background-color: rgb(205, 203, 218);
   transition: transform 0.2s, box-shadow 0.2s;
   margin-top: 10px;
 }
