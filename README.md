@@ -66,6 +66,7 @@ The following **optional** features are implemented:
 
 Here's a walkthrough of implemented user stories:
 
+**Gif was too large, will upload images later**
 
 <!-- Replace this with whatever GIF tool you used! -->
 GIF created with ScreenToGif
