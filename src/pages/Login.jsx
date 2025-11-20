@@ -103,14 +103,19 @@ const Login = ({ setIsLoggedIn }) => {
   return (
     <div className="outer">
 
-        <div className="header">
+        {/* <div className="header">
             <img className="leaf-logo" src={leafLogo} alt="Logo" />
             <h1>The Environmental Post</h1>
-        </div>
+        </div> */}
+        <br/>
+        <br/>
+        <br/>
+        <br/>
 
-        <div className="main-container">
+
+        <div className="main-container" >
             
-        <div className="card">
+        <div className="card" style={{ backgroundColor:"rgba(219, 238, 255, 0.6)"}}>
             <h2>Login</h2>
             {err && <p className="signup-err">{err}</p>}
             {!loadingSignup && user && <p className='confirm-email'>Please confirm your email in order to log in</p>}
@@ -131,10 +136,10 @@ const Login = ({ setIsLoggedIn }) => {
             />
 
             <div className="button-group">
-            <button className="login" onClick={handleLogin} disabled={loadingLogin}>
+            <button className="default" onClick={handleLogin} disabled={loadingLogin}>
                 {loadingLogin ? "Loading..." : "Login"}
             </button>
-            <button className='signup' onClick={handleSignup} disabled={loadingSignup}> 
+            <button className='default' onClick={handleSignup} disabled={loadingSignup}> 
                     {loadingSignup ? "Loading..." : "Sign Up" }
                 </button>
             </div>

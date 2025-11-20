@@ -88,17 +88,17 @@ const ProfilePage = () => {
 
   return (
     <div className="profile-outer">
-      <div className="header">
+      {/* <div className="header">
         <img className="leaf-logo" src={leafLogo} alt="Logo" />
         <h1>The Environmental Post</h1>
-      </div>
+      </div> */}
       
-      <Nav className="profile-navbar">
+      {/* <Nav className="profile-navbar">
         <Nav.Link href="/homepage">Feed</Nav.Link>
         <Nav.Link href="/addpost">Add Post</Nav.Link>
         <Nav.Link href="/profilepage">Profile</Nav.Link>
         <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-      </Nav>
+      </Nav> */}
 
       <div className="profile-page-content">
         <div className="profile-info">
@@ -130,6 +130,7 @@ const ProfilePage = () => {
                 
                 return (
                   
+                
                   <Link to={`/postview/${post.id}`} className="card-link">
                   <Card key={post.id} className="profile-card">
                                         

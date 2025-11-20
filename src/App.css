@@ -1,13 +1,26 @@
+
+
 #root {
     background-image: url("./assets/windows_xp_16.jpg");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    /* filter: blur(5px); */
     min-height: 100vh; /* Changed from height to min-height */
     width: 100%;
     margin: 0;
     padding: 20px 0; /* Moved margin into padding */
     box-sizing: border-box;
+}
+
+.window-responsive {
+  width: 70%;
+}
+
+@media (max-width: 1000px) {
+  .window-responsive {
+    width: 100%; /* Adjust width when screen is small */
+  }
 }
 
 .main-content {
@@ -24,7 +37,7 @@
     background-color: rgba(18, 88, 88, 0.5);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
     #root {
         padding: 0; /* Remove padding on mobile */
     }

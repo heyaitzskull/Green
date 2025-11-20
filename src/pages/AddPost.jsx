@@ -145,21 +145,18 @@ const AddPost = () => {
     }, []); //run only on component mount
 
     return (
-        <div className="outer">
+        <div>
 
-            <div className="header">
+            {/* <div className="header">
                 <img className="leaf-logo" src={leafLogo} alt="Logo" />
                 <h1>The Environmental Post</h1>
-            </div>
-            <Nav className="profile-navbar">
+            </div> */}
+            {/* <Nav className="profile-navbar">
                 <Nav.Link href="/homepage">Feed</Nav.Link>
                 <Nav.Link href="/addpost">Add Post</Nav.Link>
                 <Nav.Link href="/profilepage">Profile</Nav.Link>
                 <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-            </Nav>
-
-           
-                
+            </Nav> */}
 
                 <div className="add-page-content">
                     <p style={{color: 'red'}}>{err}</p>
@@ -199,7 +196,7 @@ const AddPost = () => {
                         <br/>
                         <br/>
                         
-                        <button className="submit" type="submit" disabled={loading}>
+                        <button type="submit" disabled={loading}>
                             {loading ? "Loading..." : "Create Post"}
                         </button>
                     </form>

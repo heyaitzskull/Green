@@ -36,14 +36,18 @@
 
 .homepage-card {
   min-height: auto;
-  width: 300px;
+  width: 350px;
   margin: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 5px;
+  box-shadow: 5px 5px 0px rgba(72, 185, 255, 0.5);
   overflow: hidden;
-  background-color: rgb(205, 203, 218);
+  background-color: rgb(255, 255, 255);
   transition: transform 0.2s, box-shadow 0.2s;
   margin-top: 10px;
+}
+
+.homepage-card:hover {
+   transform: scale(1.01);
 }
 
 .card-link {

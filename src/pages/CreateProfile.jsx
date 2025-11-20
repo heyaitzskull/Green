@@ -105,13 +105,13 @@ const CreateProfile = () => {
   return (
     <div className="outer">
 
-      <div className="header">
+      {/* <div className="header">
           <img className="leaf-logo" src={leafLogo} alt="Logo" />
           <h1>The Environmental Post</h1>
-      </div>
-    <div class='container'>
+      </div> */}
+    <div class='container' >
       <h1 class="title">First, let's create your profile</h1>
-      <div class="inputs">
+      <div class="inputs" style={{ backgroundColor:"rgba(219, 238, 255, 0.6)"}}>
         {err && <p style={{ color: "red"}}>{err}</p>}
 
       <div className="input-container">
@@ -161,11 +161,13 @@ const CreateProfile = () => {
         />
       </div>
 
+        <br/>
+        <br/>
       <div>
-        <button class="frutiger-aero-button"onClick={handleCreateProfile} disabled={loading}>
+        <button className="default"onClick={handleCreateProfile} disabled={loading}>
           {loading ? "Saving..." : "Save"}
         </button>
-        <button class="frutiger-aero-button-logout" onClick={handleLogout} disabled={loading}>
+        <button className="default" onClick={handleLogout} disabled={loading}>
           {loading ? "Loading..." : "Logout"}
         </button>
         </div>

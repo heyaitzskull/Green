@@ -149,17 +149,17 @@ const PostView = () => {
 
   return (
     <div className="profile-outer">
-      <div className="header">
+      {/* <div className="header">
         <img className="leaf-logo" src={leafLogo} alt="Logo" />
         <h1>The Environmental Post</h1>
-      </div>
+      </div> */}
 
-      <Nav className="profile-navbar">
+      {/* <Nav className="profile-navbar">
         <Nav.Link href="/homepage">Feed</Nav.Link>
         <Nav.Link href="/addpost">Add Post</Nav.Link>
         <Nav.Link href="/profilepage">Profile</Nav.Link>
         <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-      </Nav>
+      </Nav> */}
 
       <div className="profile-page-content">
         {err && <p style={{ color: 'red' }}>{err}</p>}
@@ -171,7 +171,7 @@ const PostView = () => {
           ← Back to Feed
         </button>
 
-        <Card style={{ width: '80%', margin: '0 auto' }}>
+        <Card style={{ width: '70%', height: '100%', margin: '0 auto' }}>
           <Card.Body>
             <div style={{ marginBottom: '20px' }}>
               <h2>{post.title}</h2>
@@ -210,6 +210,7 @@ const PostView = () => {
               display: 'flex', 
               gap: '15px', 
               marginTop: '30px',
+              marginBottom: '30px',
               paddingTop: '20px',
               borderTop: '1px solid #ddd'
             }}>
@@ -221,7 +222,8 @@ const PostView = () => {
                   cursor: 'pointer',
                   border: '1px solid #4caf50',
                   borderRadius: '8px',
-                  background: 'white'
+                  background: 'white',
+                  marginBottom: '50px',
                 }}
               >
                 🍃 Leaf ({stats.leafs})
@@ -234,7 +236,8 @@ const PostView = () => {
                   cursor: 'pointer',
                   border: '1px solid #2196f3',
                   borderRadius: '8px',
-                  background: 'white'
+                  background: 'white',
+                  marginBottom: '50px'
                 }}
               >
                 🚶 Going ({stats.goings})
@@ -247,7 +250,8 @@ const PostView = () => {
                   cursor: 'pointer',
                   border: '1px solid #ff9800',
                   borderRadius: '8px',
-                  background: 'white'
+                  background: 'white',
+                  marginBottom: '50px'
                 }}
               >
                 ♻️ Recycle ({stats.recycles})

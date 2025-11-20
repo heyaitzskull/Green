@@ -187,16 +187,17 @@ const HomePage = () => {
   return (
     <div className="outer">
 
-      <div className="header">
+      {/* <div className="header">
           <img className="leaf-logo" src={leafLogo} alt="Logo" />
           <h1>The Environmental Post</h1>
-      </div>
-      <Nav className="profile-navbar">
+      </div> */}
+      {/* <Nav className="profile-navbar">
         <Nav.Link href="/homepage">Feed</Nav.Link>
         <Nav.Link href="/addpost">Add Post</Nav.Link>
         <Nav.Link href="/profilepage">Profile</Nav.Link>
         <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-      </Nav>
+      </Nav> */}
+      
 
       <div className="page-content">
         {posts.length === 0 ? (
@@ -228,25 +229,30 @@ const HomePage = () => {
               
               return (
                 
-                <Link to={`/postview/${post.id}`} className="card-link">
                 <Card key={post.id} className="homepage-card">
-                  <Card.Body>
-                    <Card.Title><strong>{post.title}</strong></Card.Title>
-                    
-                    {/* <p><strong>Location:</strong> {post.location}</p> */}
-                    {/* <p><strong>Scale:</strong> {post.scale}</p> */}
+                  
+                  <Link to={`/postview/${post.id}`} className="card-link">
 
-                    {/* {post.image_url && (
-                      <ia
-                        src={post.image_url}
-                        alt="Post"
-                        style={{ width: "200px", height:"200px", borderRadius: "8px", marginTop: "10px", objectFit: "cover"}}
-                      />
-                    )} */}
+                    <Card.Body>
+                      <Card.Title><strong>{post.title}</strong></Card.Title>
+                      
+                      <p><em>{post.location}</em></p>
+                      {/* <p><strong>Scale:</strong> {post.scale}</p> */}
 
-                    <p>{new Date(post.created_at).toLocaleString()}</p>
-                    
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                      {post.image_url && (
+                        <img
+                          src={post.image_url}
+                          alt="Post"
+                          style={{ width: "200px", height:"200px", borderRadius: "8px", marginTop: "10px", objectFit: "cover"}}
+                        />
+                      )}
+
+                      <p>{new Date(post.created_at).toLocaleString()}</p>
+
+                    </Card.Body>
+                  </Link>
+
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                       <button onClick={() => handleLeafGoingRecycle(post.id, 'leaf')}>
                         {stats.leafs}🍃
                       </button>
@@ -261,15 +267,11 @@ const HomePage = () => {
                       </button>
                     </div>
                   
-
-
-                  </Card.Body>
                 </Card>
-                </Link>
-              );
+                
+              );             
             })}
             
-
           </div>
         </div>
           )}

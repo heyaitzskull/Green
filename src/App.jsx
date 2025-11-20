@@ -10,6 +10,7 @@ import AddPost from "./pages/AddPost"
 import ProfilePage from "./pages/ProfilePage"
 import PostView from "./pages/PostView"
 import { supabase } from "./lib/supabaseClient";
+import { Link } from "react-router-dom";
 import leafLogo from "./assets/leaf-logo.png"
 
 function App() {
@@ -31,6 +32,17 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    // setLoading(true);
+    // const { error } = await supabase.auth.signOut();
+    // setLoading(false);
+    // if (error) return setErr(error.message);
+    // navigate("/login");
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    navigate("/login");
+  };
 
   if (isLoggedIn === null) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
@@ -80,9 +92,42 @@ function App() {
   ]);
 
   return (
-    <div className="main-content">
-      {element}
+    // <div className="main-content">
+    //   {element}
+    //   {/* test */}
+    // </div>
+
+    //THIS WORKS!!!
+    <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%"}}>
+      
+    <div className="window active" style={{ width: "70%", minHeight:"550px"}}>
+    <div className="title-bar" style={{height: "50px"}}>
+      <div className="title-bar-text" style={{fontSize: "20px"}} >The Environmental Post</div>
+      <div className="title-bar-controls">
+        <button aria-label="Minimize"></button>
+        <button aria-label="Maximize"></button>
+        <button aria-label="Close"></button>
+      </div>
     </div>
+    <section class="tabs">
+      <menu role="tablist" aria-label="Tabs Template">
+        {/* aria-selected="true" */}
+        <button role="tab" aria-controls="tab-A" ><Link to="/homepage">Feed</Link></button>
+        <button role="tab" aria-controls="tab-B"><Link to="/addpost">Add Post</Link></button>
+        <button role="tab" aria-controls="tab-C"><Link to="/profilepage">Profile</Link></button>
+        <button role="tab" aria-controls="tab-D" onClick={handleLogout}><Link to="/login">Logout</Link></button>
+      </menu>
+      
+    </section>
+    <div className="window-body has-space">
+      {/* <p>There's so much room for activities!There's so much room for activities!There's so much room for activities!There's so much room for activities!</p> */}
+      <article role="tabpanel" id="tab-A" style={{minHeight:"550px"}}>{element}</article>
+      <article role="tabpanel" id="tab-B" hidden style={{minHeight:"550px"}}>{element}</article>
+      <article role="tabpanel" id="tab-C" hidden style={{minHeight:"550px"}}>{element}</article>
+      <article role="tabpanel" id="tab-D" hidden style={{minHeight:"550px"}}>{element}</article>
+    </div>
+  </div>
+  </div>
   );
 }
 
