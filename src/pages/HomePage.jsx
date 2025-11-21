@@ -187,18 +187,6 @@ const HomePage = () => {
   return (
     <div className="outer">
 
-      {/* <div className="header">
-          <img className="leaf-logo" src={leafLogo} alt="Logo" />
-          <h1>The Environmental Post</h1>
-      </div> */}
-      {/* <Nav className="profile-navbar">
-        <Nav.Link href="/homepage">Feed</Nav.Link>
-        <Nav.Link href="/addpost">Add Post</Nav.Link>
-        <Nav.Link href="/profilepage">Profile</Nav.Link>
-        <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-      </Nav> */}
-      
-
       <div className="page-content">
         {posts.length === 0 ? (
           <p>No posts yet...</p>

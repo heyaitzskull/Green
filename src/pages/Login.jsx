@@ -103,10 +103,6 @@ const Login = ({ setIsLoggedIn }) => {
   return (
     <div className="outer">
 
-        {/* <div className="header">
-            <img className="leaf-logo" src={leafLogo} alt="Logo" />
-            <h1>The Environmental Post</h1>
-        </div> */}
         <br/>
         <br/>
         <br/>

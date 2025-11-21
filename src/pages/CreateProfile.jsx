@@ -105,10 +105,6 @@ const CreateProfile = () => {
   return (
     <div className="outer">
 
-      {/* <div className="header">
-          <img className="leaf-logo" src={leafLogo} alt="Logo" />
-          <h1>The Environmental Post</h1>
-      </div> */}
     <div class='container' >
       <h1 class="title">First, let's create your profile</h1>
       <div class="inputs" style={{ backgroundColor:"rgba(219, 238, 255, 0.6)"}}>
