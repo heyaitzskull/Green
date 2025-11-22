@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient.js";
-import "./Login.css";
+// import "./Login.css";
 import leafLogo from "../assets/leaf-logo.png"
+import flower from "../assets/orange_flower.png"
 
 const Login = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState("");
@@ -101,35 +102,46 @@ const Login = ({ setIsLoggedIn }) => {
   };
 
   return (
-    <div className="outer">
-
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-
-
-        <div className="main-container" >
+    <div className="main-container">
             
-        <div className="card" style={{ backgroundColor:"rgba(219, 238, 255, 0.6)"}}>
-            <h2>Login</h2>
+            <wrapper className="login-wrapper">
+            <div class="login-box">
+              {/* <div class="box2"> */}
+                <img src={flower} style={{width: "180px", height: "180px", borderRadius: "15px", border:"2px solid rgb(66, 66, 66)", boxShadow: "0 0 1px 1px rgb(255, 255, 255)", objectFit:"cover", display: "block"}}/>
+              {/* </div> */}
+            </div>
+          </wrapper>
+
+          <svg width="0" height="0">
+              <clipPath id="svgClip" clipPathUnits="objectBoundingBox">
+                  <path d="M.067.067C.1676 0 .8379 0 .9385.067C1.0055.1676 1.0055.8379.9385.9385C.8379 1.0055.1676 1.0055.067.9385C0 .8379 0 .1676.067.067"></path>
+              </clipPath>
+          </svg>
+            
+            <h2 style={{fontSize:"20px", marginTop:"20px", marginBottom:"15px"}}>Login</h2>
             {err && <p className="signup-err">{err}</p>}
             {!loadingSignup && user && <p className='confirm-email'>Please confirm your email in order to log in</p>}
 
 
+          <div class="flex flex-col gap-3">
             <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+              className="email"
+              style={{height:"30px", width:"250px", fontSize:"15px"}}
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
 
             <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+              className="password"
+              style={{height:"30px", width:"250px", marginBottom:"25px", fontSize:"15px"}}
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
 
             <div className="button-group">
             <button className="default" onClick={handleLogin} disabled={loadingLogin}>
@@ -140,10 +152,14 @@ const Login = ({ setIsLoggedIn }) => {
                 </button>
             </div>
 
-
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            
+        
         </div>
-        </div>
-    </div>
+    
   );
 };
 

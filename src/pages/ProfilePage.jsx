@@ -7,6 +7,7 @@ import leafLogo from "../assets/leaf-logo.png"
 import { Link } from "react-router-dom";
 import "./ProfilePage.css"; // Import ProfilePage specific CSS
 
+
 const ProfilePage = () => {
     
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ const ProfilePage = () => {
         .select("*")
         .eq("id", authUser.id)
         .single();
+        
 
     if (error) {
       console.log(error);
@@ -63,6 +65,10 @@ const ProfilePage = () => {
     setPosts(data);
   };
 
+  const previewProfilePic = () => {
+
+  }
+
   useEffect(() => {
     fetchUser();
   }, []);
@@ -88,24 +94,41 @@ const ProfilePage = () => {
 
   return (
     <div className="profile-outer">
-      {/* <div className="header">
-        <img className="leaf-logo" src={leafLogo} alt="Logo" />
-        <h1>The Environmental Post</h1>
-      </div> */}
-      
-      {/* <Nav className="profile-navbar">
-        <Nav.Link href="/homepage">Feed</Nav.Link>
-        <Nav.Link href="/addpost">Add Post</Nav.Link>
-        <Nav.Link href="/profilepage">Profile</Nav.Link>
-        <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-      </Nav> */}
-
       <div className="profile-page-content">
         <div className="profile-info">
-          <h2>@{user?.username}</h2>
-          {user?.name && <p><strong>Name:</strong> {user.name}</p>}
-          {user?.bio && <p><strong>Bio:</strong> {user.bio}</p>}
-          {user?.phone_number && <p><strong>Phone:</strong> {user.phone_number}</p>}
+
+          
+          <wrapper className="profile-wrapper">
+            <div className="profile-box">
+              <img src={user?.profile_pic_path} style={{width: "150px", height: "150px", borderRadius: "15px", border:"2px solid rgb(66, 66, 66)", boxShadow: "0 0 1px 1px rgb(255, 255, 255)", objectFit:"cover", display: "block"}}/>
+            </div>
+          </wrapper>
+        
+          <br/>
+          
+          <svg width="0" height="0">
+              <clipPath id="svgClip" clipPathUnits="objectBoundingBox">
+                  <path d="M.067.067C.1676 0 .8379 0 .9385.067C1.0055.1676 1.0055.8379.9385.9385C.8379 1.0055.1676 1.0055.067.9385C0 .8379 0 .1676.067.067"></path>
+              </clipPath>
+          </svg>
+         
+          <div style={{width:'100vh'}}>
+
+            {/* this will only appear here if profile user is logged in */}
+            <div style={{textAlign:"right"}}>
+              <button>Edit</button>
+            </div>
+            <h1>@{user?.username}</h1>
+            
+            {user?.name && <p><strong>Name:</strong> {user.name}</p>}
+            {user?.phone_number && user?.display_number === 1 && <p><strong>Phone:</strong> {user.phone_number}</p>}
+            {user?.bio && <p><strong>Bio:</strong> {user.bio}</p>}
+
+            add interests array of interest
+            
+
+          </div>
+
         </div>
 
         <div className="activity-tabs">

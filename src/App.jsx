@@ -13,6 +13,7 @@ import { supabase } from "./lib/supabaseClient";
 import { Link } from "react-router-dom";
 import leafLogo from "./assets/leaf-logo.png"
 
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -98,18 +99,23 @@ function App() {
     // </div>
 
     //THIS WORKS!!!
-    <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%"}}>
-      
-    <div className="window active" style={{ width: "70%", minHeight:"550px"}}>
-    <div className="title-bar" style={{height: "50px"}}>
-      <div className="title-bar-text" style={{fontSize: "20px"}} >The Environmental Post</div>
+
+    <div className="main"style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%"}}>
+    {/* <div className="main"> */}
+    <div className="window glass active window-responsive" style={{minHeight:"550px"}}>
+    <div className="title-bar" style={{height: "37px"}}>
+      <div className="title-bar-text" style={{fontSize: "20px", marginLeft:"5px", display:"flex", flexDirection:"row", gap:"10px"}}> 
+        <img className="leaf-logo" class="w-5 h-auto" src={leafLogo} alt="Logo" />
+        The Environmental Post
+      </div>
       <div className="title-bar-controls">
-        <button aria-label="Minimize"></button>
+        <button aria-label="Minimize" ></button>
         <button aria-label="Maximize"></button>
         <button aria-label="Close"></button>
       </div>
     </div>
-    <section class="tabs">
+    
+    <section className="tabs">
       <menu role="tablist" aria-label="Tabs Template">
         {/* aria-selected="true" */}
         <button role="tab" aria-controls="tab-A" ><Link to="/homepage">Feed</Link></button>
@@ -119,12 +125,15 @@ function App() {
       </menu>
       
     </section>
+
     <div className="window-body has-space">
       {/* <p>There's so much room for activities!There's so much room for activities!There's so much room for activities!There's so much room for activities!</p> */}
+      
       <article role="tabpanel" id="tab-A" style={{minHeight:"550px"}}>{element}</article>
       <article role="tabpanel" id="tab-B" hidden style={{minHeight:"550px"}}>{element}</article>
       <article role="tabpanel" id="tab-C" hidden style={{minHeight:"550px"}}>{element}</article>
       <article role="tabpanel" id="tab-D" hidden style={{minHeight:"550px"}}>{element}</article>
+    
     </div>
   </div>
   </div>
