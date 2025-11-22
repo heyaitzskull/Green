@@ -124,8 +124,9 @@ const ProfilePage = () => {
             {user?.phone_number && user?.display_number === 1 && <p><strong>Phone:</strong> {user.phone_number}</p>}
             {user?.bio && <p><strong>Bio:</strong> {user.bio}</p>}
 
-            add interests array of interest
-            
+            add interests array of interest that user can select from a list
+            also add "other" for user to type in incase interest isn't there
+
 
           </div>
 
