@@ -40,7 +40,7 @@ const ProfilePage = () => {
     }
   };
 
-  //fetch user's posts
+  //fetch user's posts.
   const fetchUserPosts = async () => {
     if (!user) return;
     
