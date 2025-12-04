@@ -2,16 +2,17 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
 import "./HomePage.css"
-import Nav from 'react-bootstrap/Nav';
 import Card from 'react-bootstrap/Card';
-import leafLogo from "../assets/leaf-logo.png"
 import Select from 'react-select'
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 
 const HomePage = () => {
-  const [loading, setLoading] = useState(false);
+  const {user, loading } = useAuth();
+  // const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [userLeaf, setUserLeaf] = useState(false)
   const [userGoing, setUserGoing] = useState(false)
@@ -29,23 +30,23 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   //getting the user's profile
-  const fetchUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+  // const fetchUser = async () => {
+  //   const { data: { user: authUser } } = await supabase.auth.getUser();
 
-    if (!authUser) {
-      navigate("/login");
-      return;
-    }
+  //   if (!authUser) {
+  //     navigate("/login");
+  //     return;
+  //   }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authUser.id)
-      .single();
+  //   const { data, error } = await supabase
+  //     .from("profiles")
+  //     .select("*")
+  //     .eq("id", authUser.id)
+  //     .single();
 
-    if (error) console.log(error);
-    else setUser(data);
-  };
+  //   if (error) console.log(error);
+  //   else setUser(data);
+  // };
 
   //fetching ALL posts with their stats using JOIN
   const fetchPosts = async () => {
@@ -70,13 +71,6 @@ const HomePage = () => {
     console.log(data);
   }
 
-  const handleLogout = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setLoading(false);
-    if (error) return setErr(error.message);
-    navigate("/login");
-  };
 
   const filterPosts = (props) => {
     let sorted = [...posts];
@@ -174,13 +168,16 @@ const HomePage = () => {
     fetchPosts();
   }
 
-
   useEffect(() => {
-    fetchUser();
-    fetchPosts();
-  }, []);
+    if (!loading && !user) {
+      navigate("/login");
+    }
+    if (!loading && user) {
+      fetchPosts();
+    }
+  }, [loading, user]);
 
-  if (!user) {
+  if (loading) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
   }
 

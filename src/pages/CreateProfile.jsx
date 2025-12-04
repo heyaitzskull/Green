@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
 import "./CreateProfile.css"
-import leafLogo from "../assets/leaf-logo.png"
 import goldfish from "../assets/goldfish.jpg"
-import defaultPfp from "../assets/profile-icon.png"
 import { v4 as uuidv4 } from 'uuid';
 
 const CreateProfile = () => {

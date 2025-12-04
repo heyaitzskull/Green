@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useRoutes } from "react-router-dom";
 import "./App.css";
 import Login from "./pages/Login";
-import SignUp from "./pages/Signup";
 import CreateProfile from "./pages/CreateProfile";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import HomePage from "./pages/Homepage";

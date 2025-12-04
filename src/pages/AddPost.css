@@ -137,10 +137,8 @@ input[type="file"]:hover {
   transform: translateY(5px);
 }
 
-p[style*="color: red"] {
-    padding: 10px;
-    background: #ffebee;
-    border-left: 4px solid #f44336;
-    border-radius: 4px;
-    margin-bottom: 15px;
+
+.err-msg {
+  padding: 10px;
+  color: red;
 }

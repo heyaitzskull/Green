@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
-import Nav from 'react-bootstrap/Nav';
 import Card from 'react-bootstrap/Card';
-import leafLogo from "../assets/leaf-logo.png";
+import { useAuth } from "../context/AuthContext";
 import "./ProfilePage.css"; // Reuse ProfilePage styles
 
 const PostView = () => {
-  const [loading, setLoading] = useState(false);
+
+  const {user, loading} = useAuth();
   const [err, setErr] = useState("");
-  const [user, setUser] = useState(null);
   const [post, setPost] = useState(null);
   const [author, setAuthor] = useState(null);
   const [userLeaf, setUserLeaf] = useState(false)
@@ -17,24 +16,6 @@ const PostView = () => {
   const [userRecycle, setUserRecycle] = useState(false)
   const { postId } = useParams();
   const navigate = useNavigate();
-
-  const fetchUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-
-    if (!authUser) {
-      navigate("/login");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authUser.id)
-      .single();
-
-    if (error) console.log(error);
-    else setUser(data);
-  };
 
   const fetchPost = async () => {
     const { data, error } = await supabase
@@ -71,14 +52,6 @@ const PostView = () => {
     } else {
       setAuthor(authorData);
     }
-  };
-
-  const handleLogout = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setLoading(false);
-    if (error) return setErr(error.message);
-    navigate("/login");
   };
 
   const handleLeafGoingRecycle = async (type) => {
@@ -119,8 +92,6 @@ const PostView = () => {
       
     }
 
-    
-
     const { error } = await supabase
       .from('lgr_stats')
       .update(updateData)
@@ -136,9 +107,16 @@ const PostView = () => {
   };
 
   useEffect(() => {
-    fetchUser();
-    fetchPost();
-  }, [postId]);
+    
+    if (!loading && !user) {
+      navigate("/login");
+    }
+
+    if (!loading && user) {
+      fetchPost();
+    }
+    
+  }, [postId, user, loading]);
 
   if (!user || !post) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;

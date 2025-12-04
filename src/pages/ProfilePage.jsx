@@ -1,44 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
-import Nav from 'react-bootstrap/Nav';
 import Card from 'react-bootstrap/Card';
-import leafLogo from "../assets/leaf-logo.png"
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./ProfilePage.css"; // Import ProfilePage specific CSS
 
 
 const ProfilePage = () => {
-    
-  const [loading, setLoading] = useState(false);
+  
+  const {user, loading} = useAuth();
   const [err, setErr] = useState("");
-  const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('Posts');
   const tabItems = ['Posts', 'Goings', 'Leafs'];
   const navigate = useNavigate();
-
-  const fetchUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-
-    if (!authUser) {
-        navigate("/login");
-        return;
-    }
-
-    const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-        
-
-    if (error) {
-      console.log(error);
-    } else {
-      setUser(data);
-    }
-  };
 
   //fetch user's posts.
   const fetchUserPosts = async () => {
@@ -70,22 +46,13 @@ const ProfilePage = () => {
   }
 
   useEffect(() => {
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+    if (!loading && user) {
       fetchUserPosts();
     }
-  }, [user]);
-
-  const handleLogout = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setLoading(false);
-    if (error) return setErr(error.message);
-    navigate("/login");
-  };
+  }, [user, loading]);
 
   if (!user) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;

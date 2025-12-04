@@ -3,58 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
 import Select from 'react-select'
 import "./AddPost.css";
-import Nav from 'react-bootstrap/Nav';
-import leafLogo from "../assets/leaf-logo.png";
-// You need to import a UUID generator, install 'uuid' if you haven't: npm install uuid
+import { useAuth } from "../context/AuthContext";
+
+//import a UUID generator, install 'uuid' if you haven't: npm install uuid
 import { v4 as uuidv4 } from 'uuid'; // Assuming 'uuid' package is installed
 
 const AddPost = () => {
+    const { user} = useAuth();
+    const navigate = useNavigate();
+
     const [loading, setLoading] = useState(false);
-    const [err, setErr] = useState("Add a Post");
-    const [user, setUser] = useState(null);
+    const [err, setErr] = useState();
     const [title, setTitle] = useState("");
+    
     // imagePath will store the path in the bucket (e.g., 'user_id/uuid')
     const [imagePath, setImagePath] = useState(null); 
+
     // imagePreview will store the full public URL for display
     const [imagePreview, setImagePreview] = useState(null); 
     const [location, setLocation] = useState("");
     const [caption, setCaption] = useState("");
     const [scale, setScale] = useState(null);
+
     const scaleOptions = [
         { value:"small", label:'Small' },
         { value:"medium", label:'Medium'},
         { value:"large", label: 'Large'},
     ]
-    
-    const navigate = useNavigate();
-    
-    // --- Fetch User ---
-    const fetchUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-
-      if (!authUser) {
-        navigate("/login");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-
-      if (error) console.log(error);
-      else setUser(data);
-    };
-
-    //logout
-    const handleLogout = async () => {
-        setLoading(true);
-        const { error } = await supabase.auth.signOut();
-        setLoading(false);
-        if (error) return setErr(error.message);
-        navigate("/login");
-    };
 
     //upload image
     const uploadImage = async (e) => {
@@ -141,66 +116,57 @@ const AddPost = () => {
     };
  
     useEffect(() => {
-        fetchUser();
-    }, []); //run only on component mount
+        if (!user) {
+            navigate("/login");
+        }
+
+    }, [user]); //run only on component mount
 
     return (
         <div>
-
-            {/* <div className="header">
-                <img className="leaf-logo" src={leafLogo} alt="Logo" />
-                <h1>The Environmental Post</h1>
-            </div> */}
-            {/* <Nav className="profile-navbar">
-                <Nav.Link href="/homepage">Feed</Nav.Link>
-                <Nav.Link href="/addpost">Add Post</Nav.Link>
-                <Nav.Link href="/profilepage">Profile</Nav.Link>
-                <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-            </Nav> */}
-
-                <div className="add-page-content">
-                    <p style={{color: 'red'}}>{err}</p>
-                    <form onSubmit={handleUpload}>
+            <div className="add-page-content">
+                <h>Add Post</h>
+                <p className="err-msg">{err}</p>
+                <form onSubmit={handleUpload}>
+                    <div>
+                        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)}/>
+                        <input type="text" placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)}/>
+                        <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)}/>
                         <div>
-                            <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)}/>
-                            <input type="text" placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)}/>
-                            <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)}/>
-                            <div>
-                                {/* <input type="text" placeholder="Scale" value={scale} onChange={(e) => setScale(e.target.value)}/> */}
-                                <Select 
-                                    options={scaleOptions}
-                                    onChange = {(selected) => {
-                                        setScale(selected.value)
-                                    }}
-                                />
-                            </div>
+                            {/* <input type="text" placeholder="Scale" value={scale} onChange={(e) => setScale(e.target.value)}/> */}
+                            <Select 
+                                options={scaleOptions}
+                                onChange = {(selected) => {
+                                    setScale(selected.value)
+                                }}
+                            />
                         </div>
-                        
-                        
-                        {/* 1. File Input */}
-                        <input type="file" onChange={uploadImage} disabled={loading}/>
-                        
-                        {/* 2. Image Preview (NEW) */}
-                        {imagePreview && (
-                            <div className="image-preview-container" style={{marginTop: '15px'}}>
-                                <h4>Image Preview:</h4>
-                                
-                                <img 
-                                    src={imagePreview} 
-                                    alt="Post Preview" 
-                                    style={{maxWidth: '300px', maxHeight: '300px', border: '1px solid #ccc', display: 'block'}}
-                                />
-                            </div>
-                        )}
+                    </div>
+                    
+                    
+                    {/* 1. File Input */}
+                    <input type="file" onChange={uploadImage} disabled={loading}/>
+                    
+                    {/* 2. Image Preview (NEW) */}
+                    {imagePreview && (
+                        <div className="image-preview-container" style={{marginTop: '15px'}}>
+                            <h4>Image Preview:</h4>
+                            
+                            <img 
+                                src={imagePreview} 
+                                alt="Post Preview" 
+                                style={{maxWidth: '300px', maxHeight: '300px', border: '1px solid #ccc', display: 'block'}}
+                            />
+                        </div>
+                    )}
 
-                        <br/>
-                        <br/>
-                        
-                        <button type="submit" disabled={loading}>
-                            {loading ? "Loading..." : "Create Post"}
-                        </button>
-                    </form>
-                
+                    <br/>
+                    <br/>
+                    
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Loading..." : "Create Post"}
+                    </button>
+                </form>
             </div>
         </div>
     );

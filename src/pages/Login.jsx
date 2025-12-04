@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient.js";
-// import "./Login.css";
-import leafLogo from "../assets/leaf-logo.png"
 import flower from "../assets/orange_flower.png"
 
 const Login = ({ setIsLoggedIn }) => {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
@@ -104,7 +103,7 @@ const Login = ({ setIsLoggedIn }) => {
   return (
     <div className="main-container">
             
-            <wrapper className="login-wrapper">
+          <wrapper className="login-wrapper">
             <div class="login-box">
               {/* <div class="box2"> */}
                 <img src={flower} style={{width: "180px", height: "180px", borderRadius: "15px", border:"2px solid rgb(66, 66, 66)", boxShadow: "0 0 1px 1px rgb(255, 255, 255)", objectFit:"cover", display: "block"}}/>
