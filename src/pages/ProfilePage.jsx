@@ -10,11 +10,30 @@ import "./ProfilePage.css"; // Import ProfilePage specific CSS
 const ProfilePage = () => {
   
   const {user, loading} = useAuth();
+  const [profile, setProfile] = useState(null);
   const [err, setErr] = useState("");
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('Posts');
+
   const tabItems = ['Posts', 'Goings', 'Leafs'];
   const navigate = useNavigate();
+
+  const fetchProfile  = async () => {
+    if (!user) return;
+
+    const {data, error} = await supabase
+      .from("profiles")
+      .select("*")
+      .eq('id', user.id)
+      .single();
+    
+    if (error) {
+      console.log("Error fetching profile:", error);
+      return;
+    }
+
+    setProfile(data);
+  }
 
   //fetch user's posts.
   const fetchUserPosts = async () => {
@@ -24,7 +43,7 @@ const ProfilePage = () => {
       .from("posts")
       .select(`
         *,
-        lgr_stats (
+        post_stats (
           id,
           leafs,
           goings,
@@ -41,15 +60,12 @@ const ProfilePage = () => {
     setPosts(data);
   };
 
-  const previewProfilePic = () => {
-
-  }
-
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
     if (!loading && user) {
+      fetchProfile();
       fetchUserPosts();
     }
   }, [user, loading]);
@@ -67,7 +83,7 @@ const ProfilePage = () => {
           
           <wrapper className="profile-wrapper">
             <div className="profile-box">
-              <img src={user?.profile_pic_path} style={{width: "150px", height: "150px", borderRadius: "15px", border:"2px solid rgb(66, 66, 66)", boxShadow: "0 0 1px 1px rgb(255, 255, 255)", objectFit:"cover", display: "block"}}/>
+              <img src={profile?.profile_pic_path} style={{width: "150px", height: "150px", borderRadius: "15px", border:"2px solid rgb(66, 66, 66)", boxShadow: "0 0 1px 1px rgb(255, 255, 255)", objectFit:"cover", display: "block"}}/>
             </div>
           </wrapper>
         
@@ -83,13 +99,16 @@ const ProfilePage = () => {
 
             {/* this will only appear here if profile user is logged in */}
             <div style={{textAlign:"right"}}>
-              <button>Edit</button>
+              <Link to={`/profilepage/editprofile/${profile?.username}`}>
+                <button>Edit</button>
+              </Link>
+              
             </div>
-            <h1>@{user?.username}</h1>
+            <h1>@{profile?.username}</h1>
             
-            {user?.name && <p><strong>Name:</strong> {user.name}</p>}
-            {user?.phone_number && user?.display_number === 1 && <p><strong>Phone:</strong> {user.phone_number}</p>}
-            {user?.bio && <p><strong>Bio:</strong> {user.bio}</p>}
+            {profile?.name && <p><strong>Name:</strong> {profile.name}</p>}
+            {profile?.phone_number && profile?.display_number === 1 && <p><strong>Phone:</strong> {profile.phone_number}</p>}
+            {profile?.bio && <p><strong>Bio:</strong> {profile.bio}</p>}
 
             add interests array of interest that user can select from a list
             also add "other" for user to type in incase interest isn't there
@@ -117,11 +136,10 @@ const ProfilePage = () => {
               <p>No posts yet...</p>
             ) : (
               posts.map((post) => {
-                const stats = post.lgr_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
+                // const stats = post.post_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
                 
                 return (
                   
-                
                   <Link to={`/postview/${post.id}`} className="card-link">
                   <Card key={post.id} className="profile-card">
                                         
@@ -150,7 +168,12 @@ const ProfilePage = () => {
             )
           )}
 
-          {activeTab === 'Goings' && <p>Your goings will appear here...</p>}
+          {activeTab === 'Goings' &&
+          
+          <p>Your goings will appear here...</p>
+          }
+
+
           {activeTab === 'Leafs' && <p>Your leafs will appear here...</p>}
         </div>
       </div>

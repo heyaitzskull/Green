@@ -1,0 +1,42 @@
+
+.add-page-content {
+    display: flex;
+    flex-direction: column;
+    padding:0;
+    height: 80vh;
+    
+}
+
+.map-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 90%;
+
+    padding: 0;
+    margin: 0;
+    
+}
+
+.map {
+  width: 100%;
+  height: 90px;
+}
+
+.done-button {
+    width: 10%;
+    height: 40px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    margin-bottom: 30px;
+
+}
+
+.select-title {
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}

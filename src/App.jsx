@@ -4,10 +4,12 @@ import "./App.css";
 import Login from "./pages/Login";
 import CreateProfile from "./pages/CreateProfile";
 import ProtectedRoute from "./pages/ProtectedRoute";
-import HomePage from "./pages/Homepage";
+import HomePage from "./pages/HomePage";
 import AddPost from "./pages/AddPost"
 import ProfilePage from "./pages/ProfilePage"
 import PostView from "./pages/PostView"
+import EditProfile from "./pages/EditProfile"
+import Map from "./pages/Map"
 import { supabase } from "./lib/supabaseClient";
 import { Link } from "react-router-dom";
 import leafLogo from "./assets/leaf-logo.png"
@@ -16,6 +18,24 @@ import leafLogo from "./assets/leaf-logo.png"
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [authReady, setAuthReady] = useState(false);
+  const [profile, setProfile] = useState(null);
+
+  const fetchProfile  = async () => {
+    if (!user) return;
+
+    const {data, error} = await supabase
+      .from("profiles")
+      .select("*")
+      .eq('id', user.id)
+      .single();
+    
+    if (error) {
+      console.log("Error fetching profile:", error);
+      return;
+    }
+
+    setProfile(data);
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -32,6 +52,10 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     // setLoading(true);
@@ -52,6 +76,7 @@ function App() {
   if (!authReady) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
   }
+  
   
 
   const element = useRoutes([
@@ -87,6 +112,15 @@ function App() {
       path: "/postview/:postId",
       element: <PostView />,
     },
+    {
+      path: "/profilepage/editprofile/:userName",
+      element: <EditProfile />,
+    },
+    {
+      path: "/addpost/map",
+      element: <Map />,
+      
+    }
 
     
   ]);
@@ -104,7 +138,7 @@ function App() {
     <div className="window glass active window-responsive" style={{minHeight:"550px"}}>
     <div className="title-bar" style={{height: "37px"}}>
       <div className="title-bar-text" style={{fontSize: "20px", marginLeft:"5px", display:"flex", flexDirection:"row", gap:"10px"}}> 
-        <img className="leaf-logo" class="w-5 h-auto" src={leafLogo} alt="Logo" />
+        <img className="leaf-logo" src={leafLogo} alt="Logo" />
         The Environmental Post
       </div>
       <div className="title-bar-controls">
@@ -119,7 +153,7 @@ function App() {
         {/* aria-selected="true" */}
         <button role="tab" aria-controls="tab-A" ><Link to="/homepage">Feed</Link></button>
         <button role="tab" aria-controls="tab-B"><Link to="/addpost">Add Post</Link></button>
-        <button role="tab" aria-controls="tab-C"><Link to="/profilepage">Profile</Link></button>
+        <button role="tab" aria-controls="tab-C"><Link to='/profilepage'>Profile</Link></button>
         <button role="tab" aria-controls="tab-D" onClick={handleLogout}><Link to="/login">Logout</Link></button>
       </menu>
       

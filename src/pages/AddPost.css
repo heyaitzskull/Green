@@ -142,3 +142,29 @@ input[type="file"]:hover {
   padding: 10px;
   color: red;
 }
+
+.location-wrapper {
+  position: relative;
+}
+
+.location-dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 1000;
+}
+
+.location-dropdown li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.location-dropdown li:hover {
+  background-color: #f0f0f0;
+}

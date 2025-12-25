@@ -51,26 +51,25 @@
 
 .activity-tabs {
     display: flex;
+    justify-content: center;
+    align-items: center;
     /* gap: 10px; */
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+
 }
 
 .activity-tab {
-    padding: 10px 20px;
-    background: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s;
+  width: 100%;
+  padding: 10px 20px;
+  background: rgb(215, 219, 220);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .activity-tab.active {
     background: #4caf50;
     color: white;
-}
-
-.activity-tab:hover {
-    background: #e0e0e0;
 }
 
 .activity-content {

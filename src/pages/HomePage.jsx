@@ -7,17 +7,24 @@ import Select from 'react-select'
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+//comments, able to click on other's profiles/username to see their profile page
+//add post, when you click on map and come back it deletes all other values so you have to retype everything again: fix
+//profile page, view leafs and goings, figure out how you want to display reposts
 
 const HomePage = () => {
   const {user, loading } = useAuth();
-  // const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  // const [user, setUser] = useState(null);
+  const [profileId, setProfileId] = useState(null);
+  const [allPosts, setAllPosts] = useState([]);
   const [posts, setPosts] = useState([]);
-  const [userLeaf, setUserLeaf] = useState(false)
-  const [userGoing, setUserGoing] = useState(false)
-  const [userRecycle, setUserRecycle] = useState(false)
+  
+  // Store user reactions by post ID: { postId: { leafs: 1, goings: 0, recycles: 1 } }
+  const [userReactions, setUserReactions] = useState({});
+  
   const [filterValue, setFilterValue] = useState("recent")
+  const [searchValue, setSearchValue] = useState("")
+  const [searchByValue, setSearchByValue] = useState("title")
+
   const filters = [
     { value: 'recent', label: 'Most recent' },
     { value: 'latest', label: 'Latest' },
@@ -29,32 +36,13 @@ const HomePage = () => {
 
   const navigate = useNavigate();
 
-  //getting the user's profile
-  // const fetchUser = async () => {
-  //   const { data: { user: authUser } } = await supabase.auth.getUser();
-
-  //   if (!authUser) {
-  //     navigate("/login");
-  //     return;
-  //   }
-
-  //   const { data, error } = await supabase
-  //     .from("profiles")
-  //     .select("*")
-  //     .eq("id", authUser.id)
-  //     .single();
-
-  //   if (error) console.log(error);
-  //   else setUser(data);
-  // };
-
-  //fetching ALL posts with their stats using JOIN
+  // Fetch all posts with their stats
   const fetchPosts = async () => {
     const {data, error} = await supabase
       .from("posts")
       .select(`
         *,
-        lgr_stats (
+        post_stats (
           id,
           leafs,
           goings,
@@ -67,105 +55,176 @@ const HomePage = () => {
       console.log("Error fetching posts:", error);
       return;
     }
+    setAllPosts(data);
     setPosts(data);
-    console.log(data);
   }
 
+  const fetchProfileId = async () => {
+    if (!user) return;
+
+    const {data, error} = await supabase
+      .from("profiles")
+      .select('*')
+      .eq('id', user.id) 
+      .single();
+    
+    if (error) {
+      console.log("Error fetching profile id:", error);
+      return;
+    } 
+    setProfileId(data.id);
+  }
 
   const filterPosts = (props) => {
     let sorted = [...posts];
     
     if (props === "recent") {
-      sorted = sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); //most recent first
-
+      sorted = sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (props === "latest") {
-      sorted = sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); //oldest first
-
+      sorted = sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     } else if (props === "mostLeafs") {
-
       sorted = sorted.sort((a, b) => {
-        const aLeafs = a.lgr_stats?.[0]?.leafs || 0;
-        const bLeafs = b.lgr_stats?.[0]?.leafs || 0;
-        return bLeafs - aLeafs; //most leafs first
+        const aLeafs = a.post_stats?.[0]?.leafs || 0;
+        const bLeafs = b.post_stats?.[0]?.leafs || 0;
+        return bLeafs - aLeafs;
       });
-
     } else if (props === "leastLeafs") {
       sorted = sorted.sort((a, b) => {
-        const aLeafs = a.lgr_stats?.[0]?.leafs || 0;
-        const bLeafs = b.lgr_stats?.[0]?.leafs || 0;
-        return aLeafs - bLeafs; //least leafs first
+        const aLeafs = a.post_stats?.[0]?.leafs || 0;
+        const bLeafs = b.post_stats?.[0]?.leafs || 0;
+        return aLeafs - bLeafs;
       });
-      
     } else if (props === "mostGoing") {
       sorted = sorted.sort((a, b) => {
-        const aGoings = a.lgr_stats?.[0]?.goings || 0;
-        const bGoings = b.lgr_stats?.[0]?.goings || 0;
-        return bGoings - aGoings; //most goings first
+        const aGoings = a.post_stats?.[0]?.goings || 0;
+        const bGoings = b.post_stats?.[0]?.goings || 0;
+        return bGoings - aGoings;
       });
-      
     } else if (props === "leastGoing") {
       sorted = sorted.sort((a, b) => {
-        const aGoings = a.lgr_stats?.[0]?.goings || 0;
-        const bGoings = b.lgr_stats?.[0]?.goings || 0;
-        return aGoings - bGoings; //least goings first
+        const aGoings = a.post_stats?.[0]?.goings || 0;
+        const bGoings = b.post_stats?.[0]?.goings || 0;
+        return aGoings - bGoings;
       });
     }
     
     setPosts(sorted); 
   }
 
-  //updating the counts of leaf, going, and recycle if the user "likes" or "unlikes" it
+  // Handle reactions (leaf, going, recycle)
   const handleLeafGoingRecycle = async (postId, type) => {
-    //find the stats for this post
+    if (!profileId) return;
+
+    // Find the post and its stats
     const post = posts.find(p => p.id === postId);
-    if (!post || !post.lgr_stats || post.lgr_stats.length === 0) return;
+    if (!post || !post.post_stats || post.post_stats.length === 0) return;
 
-    const stats = post.lgr_stats[0];
-    let updateData = {};
+    const stats = post.post_stats[0];
+    
+    // Fetch current reaction for THIS specific post from database
+    const { data: reactionData, error: fetchError } = await supabase
+      .from("user_post_reactions")
+      .select("*")
+      .eq("profile_id", profileId)
+      .eq("post_id", postId)
+      .maybeSingle();
 
-    if (type === 'leaf') {
-      if (userLeaf) {
-        updateData = { leafs: stats.leafs - 1 };
-        setUserLeaf(!userLeaf)
-      } else {
-        updateData = { leafs: stats.leafs + 1 };
-        setUserLeaf(!userLeaf)
-      }
-      
-    } 
-    if (type === 'going') {
-      if (userGoing) {
-        updateData = { goings: stats.goings - 1 };
-        setUserGoing(!userGoing)
-      } else {
-        updateData = { goings: stats.goings + 1 };
-        setUserGoing(!userGoing)
-      }
-    } 
-
-    if (type === 'recycle') {
-      if (userRecycle) {
-        updateData = { recycles: stats.recycles - 1 };
-        setUserRecycle(!userRecycle)
-      } else {
-        updateData = { recycles: stats.recycles + 1 };
-        setUserRecycle(!userRecycle)
-      }
-    }
-
-    //update the stats in database
-    const { error } = await supabase
-      .from('lgr_stats')
-      .update(updateData)
-      .eq('id', stats.id);
-
-    if (error) {
-      console.log("Error updating stats:", error);
+    if (fetchError) {
+      console.log("Error fetching reaction:", fetchError);
       return;
     }
 
+    // If no reaction exists, default to all 0s
+    const currentReactions = reactionData ? {
+      leafs: reactionData.leafs || 0,
+      goings: reactionData.goings || 0,
+      recycles: reactionData.recycles || 0
+    } : { leafs: 0, goings: 0, recycles: 0 };
+    
+    // Determine if user is toggling on or off
+    const currentValue = currentReactions[type];
+    const newValue = currentValue === 1 ? 0 : 1;
+    
+    // Calculate stat changes
+    const statChange = newValue === 1 ? 1 : -1;
+    
+    // Update post_stats table
+    let updateStatsData = {};
+    if (type === 'leafs') {
+      updateStatsData = { leafs: stats.leafs + statChange };
+    } else if (type === 'goings') {
+      updateStatsData = { goings: stats.goings + statChange };
+    } else if (type === 'recycles') {
+      updateStatsData = { recycles: stats.recycles + statChange };
+    }
+
+    const { error: statsError } = await supabase
+      .from('post_stats')
+      .update(updateStatsData)
+      .eq('id', stats.id);
+
+    if (statsError) {
+      console.log("Error updating post_stats:", statsError);
+      return;
+    }
+
+    // Update user_post_reactions table
+    const updatedReactions = {
+      ...currentReactions,
+      [type]: newValue
+    };
+
+    const { error: reactionError } = await supabase
+      .from('user_post_reactions')
+      .upsert(
+        {
+          profile_id: profileId,
+          post_id: postId,
+          leafs: updatedReactions.leafs,
+          goings: updatedReactions.goings,
+          recycles: updatedReactions.recycles
+        },
+        {
+          onConflict: 'profile_id,post_id'
+        }
+      );
+
+    if (reactionError) {
+      console.log("Error updating user reactions:", reactionError);
+      return;
+    }
+
+    // Update local state cache
+    setUserReactions(prev => ({
+      ...prev,
+      [postId]: updatedReactions
+    }));
+
     // Refresh posts to show updated stats
     fetchPosts();
+  }
+
+  const handleSearch = (e) => {
+    setSearchValue(e);
+
+    if (e.trim() === "") {
+      setPosts(allPosts);
+      return;
+    }
+
+    let filteredPosts = [];
+    const lower = e.toLowerCase();
+
+    if (searchByValue === "title") {
+      filteredPosts = allPosts.filter(post => 
+        post.title.toLowerCase().includes(lower)
+      );
+    } else if (searchByValue === "location") {
+      filteredPosts = allPosts.filter(post => 
+        post.location.toLowerCase().includes(lower)
+      );
+    }
+    setPosts(filteredPosts);
   }
 
   useEffect(() => {
@@ -174,6 +233,7 @@ const HomePage = () => {
     }
     if (!loading && user) {
       fetchPosts();
+      fetchProfileId();
     }
   }, [loading, user]);
 
@@ -183,84 +243,111 @@ const HomePage = () => {
 
   return (
     <div className="outer">
-
       <div className="page-content">
-        {posts.length === 0 ? (
-          <p>No posts yet...</p>
-        ) : (
-        
-        <div style={{display:"flex", flexDirection:"column"}}>
+        <div className="filter-container">
+          <div>
+            Search By
+            <input
+              type="radio"
+              id="title"
+              value="title"
+              checked={searchByValue === "title"}
+              onChange={(e) => setSearchByValue(e.target.value)}
+            />
+            <label htmlFor="title" style={{marginRight: "5px"}}>Title</label>
 
-            <div className="filter-container">
-              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
-                  <p style={{ margin: 0 }}>Filter by:</p>
-                  <Select
-                    className="select"
-                    options={filters}
-                    placeholder="Filter by"
-                    onChange={(selected) => {
-                      setFilterValue(selected.value);
-                      filterPosts(selected.value);
-                    }}
-                    value={filters.find(f => f.value === filterValue)}
-                  />
-                </div>
+            <input
+              type="radio"
+              id="location"
+              value="location"
+              checked={searchByValue === "location"}
+              onChange={(e) => setSearchByValue(e.target.value)}
+            />
+            <label htmlFor="location" style={{marginRight: "10px"}}>Location</label>
+
+            <input type="text" 
+              className='search-feed' 
+              placeholder='Search Posts...'
+              onChange={(e) => handleSearch(e.target.value)}
+              value={searchValue}
+            />
+          </div>
+
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
+            <p style={{ margin: 0 }}>Filter by:</p>
+            <Select
+              className="select"
+              options={filters}
+              placeholder="Filter by"
+              onChange={(selected) => {
+                setFilterValue(selected.value);
+                filterPosts(selected.value);
+              }}
+              value={filters.find(f => f.value === filterValue)}
+            />
+          </div>
+        </div>
+          
+        <div className="content-area">
+          {posts.length === 0 ? (
+            <div>
+              {searchValue ? (
+                <p className="empty-post">No posts found for "{searchValue}"</p>
+              ) : (
+                <p style={{display:'flex', justifyContent:'center', textAlign:'center'}}>No posts yet...</p>
+              )}
             </div>
-
-          <div style={{display:"flex", flexDirection:"row", flexWrap: "wrap", alignItems: "center", justifyContent:"center"}}>
-
-            {posts.map((post) => {
-              const stats = post.lgr_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
-              
-              return (
+          ) : (
+            <div className="post-list">
+              {posts.map((post) => {
+                const stats = post.post_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
+                const userReacted = userReactions[post.id] || { leafs: 0, goings: 0, recycles: 0 };
                 
-                <Card key={post.id} className="homepage-card">
-                  
-                  <Link to={`/postview/${post.id}`} className="card-link">
+                return (
+                  <Card key={post.id} className="homepage-card">
+                    <Link to={`/postview/${post.id}`} className="card-link">
+                      <Card.Body>
+                        <Card.Title><strong>{post.title}</strong></Card.Title>
+                        <p><em>{post.location}</em></p>
 
-                    <Card.Body>
-                      <Card.Title><strong>{post.title}</strong></Card.Title>
-                      
-                      <p><em>{post.location}</em></p>
-                      {/* <p><strong>Scale:</strong> {post.scale}</p> */}
+                        {post.image_url && (
+                          <img
+                            src={post.image_url}
+                            alt="Post"
+                            style={{ width: "200px", height:"200px", borderRadius: "8px", marginTop: "10px", objectFit: "cover"}}
+                          />
+                        )}
 
-                      {post.image_url && (
-                        <img
-                          src={post.image_url}
-                          alt="Post"
-                          style={{ width: "200px", height:"200px", borderRadius: "8px", marginTop: "10px", objectFit: "cover"}}
-                        />
-                      )}
+                        <p>{new Date(post.created_at).toLocaleString()}</p>
+                      </Card.Body>
+                    </Link>
 
-                      <p>{new Date(post.created_at).toLocaleString()}</p>
-
-                    </Card.Body>
-                  </Link>
-
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                      <button onClick={() => handleLeafGoingRecycle(post.id, 'leaf')}>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                      <button 
+                        onClick={() => handleLeafGoingRecycle(post.id, 'leafs')}
+                        
+                      >
                         {stats.leafs}🍃
                       </button>
-                      <button onClick={() => handleLeafGoingRecycle(post.id, 'going')}>
+                      <button 
+                        onClick={() => handleLeafGoingRecycle(post.id, 'goings')}
+                        
+                      >
                         {stats.goings}🚶
                       </button>
-                      {/* <button>
-                        💬C(0)
-                      </button> */}
-                      <button onClick={() => handleLeafGoingRecycle(post.id, 'recycle')}>
+                      <button 
+                        onClick={() => handleLeafGoingRecycle(post.id, 'recycles')}
+                        
+                      >
                         {stats.recycles}♻️
                       </button>
                     </div>
-                  
-                </Card>
-                
-              );             
-            })}
-            
-          </div>
-        </div>
+                  </Card>
+                );             
+              })}
+            </div>
           )}
-        
+        </div>
       </div>
     </div>
   );

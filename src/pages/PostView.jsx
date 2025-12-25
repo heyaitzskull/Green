@@ -22,7 +22,7 @@ const PostView = () => {
       .from("posts")
       .select(`
         *,
-        lgr_stats (
+        post_stats (
           id,
           leafs,
           goings,
@@ -55,9 +55,9 @@ const PostView = () => {
   };
 
   const handleLeafGoingRecycle = async (type) => {
-    if (!post || !post.lgr_stats || post.lgr_stats.length === 0) return;
+    if (!post || !post.post_stats || post.post_stats.length === 0) return;
 
-    const stats = post.lgr_stats[0];
+    const stats = post.post_stats[0];
     let updateData = {};
 
     if (type === 'leaf') {
@@ -93,7 +93,7 @@ const PostView = () => {
     }
 
     const { error } = await supabase
-      .from('lgr_stats')
+      .from('post_stats')
       .update(updateData)
       .eq('id', stats.id);
 
@@ -123,7 +123,7 @@ const PostView = () => {
 
   }
 
-  const stats = post.lgr_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
+  const stats = post.post_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
 
   return (
     <div className="profile-outer">
@@ -131,12 +131,12 @@ const PostView = () => {
       <div className="profile-page-content">
         {err && <p style={{ color: 'red' }}>{err}</p>}
 
-        <button 
+        {/* <button 
           onClick={() => navigate('/homepage')}
           style={{ marginBottom: '20px', padding: '10px 20px', cursor: 'pointer' }}
         >
           ← Back to Feed
-        </button>
+        </button> */}
 
         <Card style={{ width: '70%', height: '100%', margin: '0 auto' }}>
           <Card.Body>

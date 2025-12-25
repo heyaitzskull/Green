@@ -1,29 +1,34 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
 import Select from 'react-select'
 import "./AddPost.css";
 import { useAuth } from "../context/AuthContext";
-
-//import a UUID generator, install 'uuid' if you haven't: npm install uuid
-import { v4 as uuidv4 } from 'uuid'; // Assuming 'uuid' package is installed
+import debounce from "lodash.debounce";
+import { v4 as uuidv4 } from 'uuid';
 
 const AddPost = () => {
-    const { user} = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
+    const locationFromRouter = useLocation();
+    const selectedLocation = locationFromRouter.state?.selectedLocation;
 
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState();
     const [title, setTitle] = useState("");
-    
-    // imagePath will store the path in the bucket (e.g., 'user_id/uuid')
+    const [locations, setLocations] = useState([]); //fixed: was setAllLocations
     const [imagePath, setImagePath] = useState(null); 
-
-    // imagePreview will store the full public URL for display
     const [imagePreview, setImagePreview] = useState(null); 
-    const [location, setLocation] = useState("");
+    
+    //Location data, stores address string AND coordinates
+    const [postLocation, setPostLocation] = useState(""); // The address string for DB
+    const [locationCoords, setLocationCoords] = useState(null); // {lat, lng}
+    
+    const [locationQuery, setLocationQuery] = useState("");
     const [caption, setCaption] = useState("");
     const [scale, setScale] = useState(null);
+
+    const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
     const scaleOptions = [
         { value:"small", label:'Small' },
@@ -31,20 +36,54 @@ const AddPost = () => {
         { value:"large", label: 'Large'},
     ]
 
-    //upload image
+    //get locations from search bar
+    const getLocations = async (query) => {
+        if (!query || query.trim().length < 3) {
+            setLocations([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&types=address,place,postcode`
+            );
+
+            if (!response.ok) {
+                console.error("Mapbox API error:", response.status);
+                setLocations([]);
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Mapbox results:", data.features);
+
+            const formattedLocations = data.features.map(feature => ({
+                place_id: feature.id,
+                display_name: feature.place_name,
+                coordinates: feature.center // [longitude, latitude]
+            }));
+
+            setLocations(formattedLocations);
+        } catch (err) {
+            console.error("Exception fetching locations:", err);
+            setLocations([]);
+        }
+    };
+
+    const debouncedFetch = useCallback(
+        debounce((value) => {
+            getLocations(value);
+        }, 300),
+        []
+    );
+
     const uploadImage = async (e) => {
-
-        //getting the file
         const file = e.target.files[0];
-
-        //if file or user doesnt exist 
         if (!file || !user) return;
 
-        //unique path for the file
         const filePath = `${user.id}/${uuidv4()}-${file.name}`;
         setLoading(true);
 
-        //uploading the file path and file into supabase images bucket
         const { data: uploadData, error: uploadError } = await supabase
             .storage
             .from('post-images')
@@ -58,27 +97,20 @@ const AddPost = () => {
             return;
         }
 
-        //getting the public URL for the newly uploaded file
         const { data: { publicUrl } } = supabase
             .storage
             .from('post-images')
             .getPublicUrl(uploadData.path); 
         
-        //save the file path and the public URL to state
         setImagePath(uploadData.path);
         setImagePreview(publicUrl);
-        setErr(""); //clear any previous errors
+        setErr("");
     }
 
-    // --- Media/Post Handler (Keep this for now, but it was not right for instant preview) ---
-    // Removed the problematic getMedia, as you only need the publicUrl after upload.
-    // The previous getMedia was trying to list files, not get public URLs for a specific file.
-
-    // --- Handle Post Upload (Uncommented and uses imagePath) ---
     const handleUpload = async (event) => {
         event.preventDefault();
 
-        if (!title || !caption || !location || !imagePath || !scale) {
+        if (!title || !caption || !postLocation || !imagePath || !scale) {
             setErr("Please fill in all fields and upload an image.");
             return;
         }
@@ -86,72 +118,182 @@ const AddPost = () => {
         setLoading(true);
         setErr("");
 
-        // Get the final public URL again, in case the upload function only saved the path
-        // It's safer to use the stored imagePreview if it exists, but getting it again
-        // from the path ensures the most current URL.
         const { data: { publicUrl: finalImageUrl } } = supabase.storage
             .from("post-images")
             .getPublicUrl(imagePath);
 
-        //insert into post with REAL image URL
-        const { error } = await supabase
+        // Prepare the post data
+        const postData = {
+            profile_id: user.id,
+            title,
+            caption,
+            location: postLocation, // The address string
+            scale,
+            image_url: finalImageUrl,
+            latitude: locationCoords.latitude,
+            longitude: locationCoords.longitude,
+            
+        };
+
+        const { data:post, error:postError } = await supabase
             .from("posts")
+            .insert(postData)
+            .select()
+            .single();
+
+        if (postError) {
+            setErr("Failed to create post: " + error.message);
+        }
+
+        const { error: statsError } = await supabase
+            .from("post_stats")
             .insert({
-                profile_id: user.id,
-                title,
-                caption,
-                location,
-                scale,
-                image_url: finalImageUrl,
-            });
+            post_id: post.id,
+            profile_id: user.id,
+            goings: 0,
+            leafs: 0,
+            recycles: 0,
+        });
 
         setLoading(false);
 
-        if (error) {
-            setErr("Failed to create post: " + error.message);
-        } else {
-            alert("Post Created!");
-            navigate("/homepage");
+        if (statsError) {
+            console.error("post_stats insert error:", statsError);
+            setErr(statsError.message);
+            return;
         }
+
+        alert("Post Created!");
+        navigate("/homepage");
     };
  
     useEffect(() => {
         if (!user) {
             navigate("/login");
         }
+    }, [user]);
 
-    }, [user]); //run only on component mount
+    useEffect(() => {
+        return () => {
+            debouncedFetch.cancel();
+        };
+    }, [debouncedFetch]);
+
+    //handle location received from map
+    useEffect(() => {
+        if (selectedLocation) {
+            console.log("Location received from map:", selectedLocation);
+            
+            //set the address for display and DB
+            setPostLocation(selectedLocation.address);
+            setLocationQuery(selectedLocation.address);
+            
+            //store coordinates=
+            setLocationCoords({
+                latitude: selectedLocation.latitude,
+                longitude: selectedLocation.longitude
+            });
+            
+            //clear the search dropdown
+            setLocations([]);
+        }
+    }, [selectedLocation]);
 
     return (
         <div>
             <div className="add-page-content">
-                <h>Add Post</h>
+                <h1>Add Post</h1>
                 <p className="err-msg">{err}</p>
                 <form onSubmit={handleUpload}>
                     <div>
-                        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)}/>
-                        <input type="text" placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)}/>
-                        <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)}/>
+                        <input 
+                            type="text" 
+                            placeholder="Title" 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                        <input 
+                            type="text" 
+                            placeholder="Caption" 
+                            value={caption} 
+                            onChange={(e) => setCaption(e.target.value)}
+                        />
+                        
+                        <br/>
+                        <br/>
+
+                        <div className="location-wrapper">
+                            <input
+                                type="text"
+                                placeholder="Search address..."
+                                value={locationQuery}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setLocationQuery(value);
+                                    setPostLocation(value); // Update the actual location value
+                                    debouncedFetch(value);
+                                }}
+                            />
+
+                            {locations.length > 0 && (
+                                <ul className="location-dropdown">
+                                    {locations.map((place) => (
+                                        <li
+                                            key={place.place_id}
+                                            onClick={() => {
+                                                setPostLocation(place.display_name);
+                                                setLocationQuery(place.display_name);
+                                                setLocationCoords({
+                                                    longitude: place.coordinates[0],
+                                                    latitude: place.coordinates[1]
+                                                });
+                                                setLocations([]);
+                                            }}
+                                        >
+                                            {place.display_name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            <button 
+                                type="button"
+                                onClick={() => navigate("/addpost/map")}
+                                style={{marginTop: '10px'}}
+                            >
+                                📍 Choose from Map
+                            </button>
+                        </div>
+
+                        {locationCoords && (
+                            <div style={{marginTop: '5px', fontSize: '12px', color: '#666'}}>
+                                📌 Coordinates: {locationCoords.latitude.toFixed(6)}, {locationCoords.longitude.toFixed(6)}
+                            </div>
+                        )}
+                        
+                        <br/>
+                        <br/>
+                        
                         <div>
-                            {/* <input type="text" placeholder="Scale" value={scale} onChange={(e) => setScale(e.target.value)}/> */}
                             <Select 
                                 options={scaleOptions}
-                                onChange = {(selected) => {
+                                placeholder="Select scale..."
+                                onChange={(selected) => {
                                     setScale(selected.value)
                                 }}
                             />
                         </div>
                     </div>
                     
+                    <input 
+                        type="file" 
+                        onChange={uploadImage} 
+                        disabled={loading}
+                    />
                     
-                    {/* 1. File Input */}
-                    <input type="file" onChange={uploadImage} disabled={loading}/>
-                    
-                    {/* 2. Image Preview (NEW) */}
                     {imagePreview && (
                         <div className="image-preview-container" style={{marginTop: '15px'}}>
                             <h4>Image Preview:</h4>
-                            
                             <img 
                                 src={imagePreview} 
                                 alt="Post Preview" 
