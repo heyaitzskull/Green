@@ -7,9 +7,26 @@ import Select from 'react-select'
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-//comments, able to click on other's profiles/username to see their profile page
-//add post, when you click on map and come back it deletes all other values so you have to retype everything again: fix
-//profile page, view leafs and goings, figure out how you want to display reposts
+//comments on each post
+
+//FOR EACH POST: add active/complete. User should be able to make a post 
+//  complete after creating the post. On their profile, each post has a
+//  sign/icon showing if its complete or active
+
+//postview: fix reaction, be able to view/add comments
+
+//profile: be able to visit other's profiles
+
+//map: when selecting location from map and come back, all info is gone and have to retype it
+
+//map initial location isnt working, always going to vienna: fix
+
+//homepage: initial filter by location if user's locaiton is on,
+//  if user's location is off, allow user to manually input city/state/address etc...
+
+//add post: add a day/time of event; add option for TBD 
+
+//map: add a main map where you can see ALL active posts 
 
 const HomePage = () => {
   const {user, loading } = useAuth();
@@ -75,6 +92,34 @@ const HomePage = () => {
     setProfileId(data.id);
   }
 
+  // Fetch user's reactions for all posts -> change it to posts that are currently displayed
+  // because will display only 20 posts at a time and display more as user scrolls
+  const fetchUserReactions = async () => {
+    if (!profileId) return;
+    
+    const { data, error } = await supabase
+      .from("user_post_reactions")
+      .select("*")
+      .eq("profile_id", profileId);
+    
+    if (error) {
+      console.log("Error fetching user reactions:", error);
+      return;
+    }
+    
+    // Convert array to object keyed by post_id
+    const reactionsMap = {};
+    data.forEach(reaction => {
+      reactionsMap[reaction.post_id] = {
+        leafs: reaction.leafs || 0,
+        goings: reaction.goings || 0,
+        recycles: reaction.recycles || 0
+      };
+    });
+    
+    setUserReactions(reactionsMap);
+  };
+
   const filterPosts = (props) => {
     let sorted = [...posts];
     
@@ -111,52 +156,69 @@ const HomePage = () => {
     setPosts(sorted); 
   }
 
-  // Handle reactions (leaf, going, recycle)
+  // Optimized reaction handler with optimistic updates
   const handleLeafGoingRecycle = async (postId, type) => {
     if (!profileId) return;
 
-    // Find the post and its stats
     const post = posts.find(p => p.id === postId);
     if (!post || !post.post_stats || post.post_stats.length === 0) return;
 
     const stats = post.post_stats[0];
     
-    // Fetch current reaction for THIS specific post from database
-    const { data: reactionData, error: fetchError } = await supabase
-      .from("user_post_reactions")
-      .select("*")
-      .eq("profile_id", profileId)
-      .eq("post_id", postId)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.log("Error fetching reaction:", fetchError);
-      return;
-    }
-
-    // If no reaction exists, default to all 0s
-    const currentReactions = reactionData ? {
-      leafs: reactionData.leafs || 0,
-      goings: reactionData.goings || 0,
-      recycles: reactionData.recycles || 0
-    } : { leafs: 0, goings: 0, recycles: 0 };
+    // Get current user reaction from local state (faster than DB query)
+    const currentReactions = userReactions[postId] || { leafs: 0, goings: 0, recycles: 0 };
     
-    // Determine if user is toggling on or off
+    // Determine if toggling on or off
     const currentValue = currentReactions[type];
     const newValue = currentValue === 1 ? 0 : 1;
-    
-    // Calculate stat changes
     const statChange = newValue === 1 ? 1 : -1;
     
-    // Update post_stats table
-    let updateStatsData = {};
-    if (type === 'leafs') {
-      updateStatsData = { leafs: stats.leafs + statChange };
-    } else if (type === 'goings') {
-      updateStatsData = { goings: stats.goings + statChange };
-    } else if (type === 'recycles') {
-      updateStatsData = { recycles: stats.recycles + statChange };
-    }
+    // OPTIMISTICALLY UPDATE UI IMMEDIATELY
+    const updatedReactions = {
+      ...currentReactions,
+      [type]: newValue
+    };
+    
+    // Update local state immediately for instant UI feedback
+    setUserReactions(prev => ({
+      ...prev,
+      [postId]: updatedReactions
+    }));
+    
+    // Update posts state immediately
+    setPosts(prevPosts => 
+      prevPosts.map(p => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            post_stats: [{
+              ...stats,
+              [type]: stats[type] + statChange
+            }]
+          };
+        }
+        return p;
+      })
+    );
+
+    // Update allPosts as well to maintain consistency
+    setAllPosts(prevPosts => 
+      prevPosts.map(p => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            post_stats: [{
+              ...stats,
+              [type]: stats[type] + statChange
+            }]
+          };
+        }
+        return p;
+      })
+    );
+
+    // THEN UPDATE DATABASE IN BACKGROUND
+    let updateStatsData = { [type]: stats[type] + statChange };
 
     const { error: statsError } = await supabase
       .from('post_stats')
@@ -165,15 +227,16 @@ const HomePage = () => {
 
     if (statsError) {
       console.log("Error updating post_stats:", statsError);
+      // Revert optimistic update on error
+      setUserReactions(prev => ({
+        ...prev,
+        [postId]: currentReactions
+      }));
+      fetchPosts();
       return;
     }
 
-    // Update user_post_reactions table
-    const updatedReactions = {
-      ...currentReactions,
-      [type]: newValue
-    };
-
+    // Update user_post_reactions
     const { error: reactionError } = await supabase
       .from('user_post_reactions')
       .upsert(
@@ -191,17 +254,13 @@ const HomePage = () => {
 
     if (reactionError) {
       console.log("Error updating user reactions:", reactionError);
-      return;
+      // Revert optimistic update on error
+      setUserReactions(prev => ({
+        ...prev,
+        [postId]: currentReactions
+      }));
+      fetchPosts();
     }
-
-    // Update local state cache
-    setUserReactions(prev => ({
-      ...prev,
-      [postId]: updatedReactions
-    }));
-
-    // Refresh posts to show updated stats
-    fetchPosts();
   }
 
   const handleSearch = (e) => {
@@ -236,6 +295,13 @@ const HomePage = () => {
       fetchProfileId();
     }
   }, [loading, user]);
+
+  // Fetch user reactions after profileId is set
+  useEffect(() => {
+    if (profileId) {
+      fetchUserReactions();
+    }
+  }, [profileId]);
 
   if (loading) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
@@ -325,19 +391,16 @@ const HomePage = () => {
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                       <button 
                         onClick={() => handleLeafGoingRecycle(post.id, 'leafs')}
-                        
                       >
                         {stats.leafs}🍃
                       </button>
                       <button 
                         onClick={() => handleLeafGoingRecycle(post.id, 'goings')}
-                        
                       >
                         {stats.goings}🚶
                       </button>
                       <button 
                         onClick={() => handleLeafGoingRecycle(post.id, 'recycles')}
-                        
                       >
                         {stats.recycles}♻️
                       </button>

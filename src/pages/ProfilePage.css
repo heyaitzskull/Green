@@ -75,7 +75,7 @@
 .activity-content {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 2px;
 
 }

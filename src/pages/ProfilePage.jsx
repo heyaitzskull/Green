@@ -12,7 +12,15 @@ const ProfilePage = () => {
   const {user, loading} = useAuth();
   const [profile, setProfile] = useState(null);
   const [err, setErr] = useState("");
+
   const [posts, setPosts] = useState([]);
+  const [goings, setGoings] = useState([]);
+  const [goingsLoaded, setGoingsLoaded] = useState(false);
+  const [leafs, setLeafs] = useState([]);
+  const [leafsLoaded, setLeafsLoaded] = useState(false);
+  const [recycles, setRecycles] = useState([]);
+
+  const [userReactions, setUserReactions] = useState([])
   const [activeTab, setActiveTab] = useState('Posts');
 
   const tabItems = ['Posts', 'Goings', 'Leafs'];
@@ -42,23 +50,118 @@ const ProfilePage = () => {
     const { data, error } = await supabase
       .from("posts")
       .select(`
-        *,
-        post_stats (
-          id,
-          leafs,
-          goings,
-          recycles
-        )
-      `)
+        *`)
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.log("Error fetching posts:", error);
+      console.log("Error fetching posts: ", error);
       return;
     }
     setPosts(data);
   };
+
+  const fetchUserGoings =  async () => {
+    if (!user) {
+      return
+    }
+
+    const {data, error} = await supabase
+      .from("user_post_reactions")
+      .select(`
+        post_id,
+        goings
+        `)
+      .eq('profile_id', user.id)
+      .eq("goings", 1)
+      .order('created_at', {ascending:false})
+
+    if (error) {
+      console.log("Error fetching user reactions: ", error)
+    }
+
+    const postIds = data.map(item => item.post_id);
+
+    const {data:posts, err} = await supabase
+      .from("posts")
+      .select("*")
+      .in("id", postIds)
+      .order('created_at', {ascending:false});
+
+    if (err) {
+      console.log("Error fetching posts:", err);
+    } 
+    setGoings(posts);
+
+  }
+
+  const fetchUserLeafs =  async () => {
+    if (!user) {
+      return
+    }
+
+    const {data, error} = await supabase
+      .from("user_post_reactions")
+      .select(`
+        post_id,
+        leafs
+        `)
+      .eq('profile_id', user.id)
+      .eq("leafs", 1)
+      .order('created_at', {ascending:false})
+
+    if (error) {
+      console.log("Error fetching user reactions: ", error)
+    }
+
+    const postIds = data.map(item => item.post_id);
+
+    const {data:posts, err} = await supabase
+      .from("posts")
+      .select("*")
+      .in("id", postIds)
+      .order('created_at', {ascending:false});
+
+    if (err) {
+      console.log("Error fetching posts:", err);
+    } 
+    setLeafs(posts);
+
+  }
+
+  const fetchUserRecycles =  async () => {
+    if (!user) {
+      return
+    }
+
+    const {data, error} = await supabase
+      .from("user_post_reactions")
+      .select(`
+        post_id,
+        recycles
+        `)
+      .eq('profile_id', user.id)
+      .eq("recycles", 1)
+      .order('created_at', {ascending:false})
+
+    if (error) {
+      console.log("Error fetching user reactions: ", error)
+    }
+
+    const postIds = data.map(item => item.post_id);
+
+    const {data:posts, err} = await supabase
+      .from("posts")
+      .select("*")
+      .in("id", postIds)
+      .order('created_at', {ascending:false});
+
+    if (err) {
+      console.log("Error fetching posts:", err);
+    } 
+    setRecycles(posts);
+
+  }
 
   useEffect(() => {
     if (!loading && !user) {
@@ -69,6 +172,18 @@ const ProfilePage = () => {
       fetchUserPosts();
     }
   }, [user, loading]);
+
+  useEffect(() => {
+    if (activeTab === "Goings" && !goingsLoaded) {
+      fetchUserGoings().then(() => setGoingsLoaded(true));
+    }
+  }, [activeTab, goingsLoaded]);
+
+  useEffect(() => {
+    if (activeTab === "Leafs" && !leafsLoaded) {
+      fetchUserLeafs().then(() => setLeafsLoaded(true));
+    }
+  }, [activeTab, leafsLoaded]);
 
   if (!user) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
@@ -168,13 +283,72 @@ const ProfilePage = () => {
             )
           )}
 
-          {activeTab === 'Goings' &&
+          {activeTab === 'Goings' && (
+            goings.length === 0 ? (
+              <p>Loading...</p>
+            ) : (
+      
+              goings.map ((post) => {
+
+                return (
+                  <Link to={`/postview/${post.id}`} className="card-link">
+                    <Card key={post.id} className="profile-card">
+                                          
+                        <Card.Title style={{marginTop:"10px"}}><strong>{post.title}</strong></Card.Title>
+                        {/* <p><strong>Location:</strong> {post.location}</p> */}
+                        {/* <p><strong>Scale:</strong> {post.scale}</p> */}
+
+                        
+                        {post.image_url && (
+                          <img
+                            src={post.image_url}
+                            alt="Post"
+                            style={{ width: "auto", height:"320px", marginTop: "10px", objectFit: "cover"}}
+                          />
+                        )}
+
+                        {/* <p style={{ fontSize: '12px', color: '#666' }}>
+                          {new Date(post.created_at).toLocaleString()}
+                        </p>
+                        */}
+                      
+                    </Card>
+                    </Link>
+
+                );
+              })
+            )
+          )}
+
+          {activeTab === 'Leafs' &&(
+            
+            leafs.length === 0 ? (
+              <p>Loading...</p>
+            ) : (
           
-          <p>Your goings will appear here...</p>
-          }
+            leafs.map ((post) => {
 
+                return (
+                  <Link to={`/postview/${post.id}`} className="card-link">
+                    <Card key={post.id} className="profile-card">
+                                      
+                        <Card.Title style={{marginTop:"10px"}}><strong>{post.title}</strong></Card.Title>
+                        
+                        {post.image_url && (
+                          <img
+                            src={post.image_url}
+                            alt="Post"
+                            style={{ width: "auto", height:"320px", marginTop: "10px", objectFit: "cover"}}
+                          />
+                        )}
 
-          {activeTab === 'Leafs' && <p>Your leafs will appear here...</p>}
+                    </Card>
+                    </Link>
+
+                );
+              }))
+            )
+            }
         </div>
       </div>
     </div>

@@ -105,3 +105,8 @@ code {
 .tabs button[role="tab"] a {
   font-size: 16px; 
 }
+
+.leaf-logo {
+  width: 22px;
+  height: auto;
+}
