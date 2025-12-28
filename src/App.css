@@ -37,7 +37,7 @@ code {
   width: 70%;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .window-responsive {
     width: 100% !important;
     max-width: 100%;

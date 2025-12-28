@@ -3,17 +3,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
 import Card from 'react-bootstrap/Card';
 import { useAuth } from "../context/AuthContext";
-import "./ProfilePage.css"; // Reuse ProfilePage styles
+import "./PostView.css";
 
 const PostView = () => {
-
   const {user, loading} = useAuth();
   const [err, setErr] = useState("");
   const [post, setPost] = useState(null);
   const [author, setAuthor] = useState(null);
-  const [userLeaf, setUserLeaf] = useState(false)
-  const [userGoing, setUserGoing] = useState(false)
-  const [userRecycle, setUserRecycle] = useState(false)
+  const [profileId, setProfileId] = useState(null);
+  const [username, setUsername] = useState(null);
+  const [userReactions, setUserReactions] = useState({});
+  const [comments, setComments] = useState([])
+  const [inputComment, setInputComment] = useState("");
+  
   const { postId } = useParams();
   const navigate = useNavigate();
 
@@ -54,176 +56,279 @@ const PostView = () => {
     }
   };
 
+  const fetchProfileId = async () => {
+    if (!user) return;
+
+    const {data, error} = await supabase
+      .from("profiles")
+      .select('*')
+      .eq('id', user.id) 
+      .single();
+    
+    if (error) {
+      console.log("Error fetching profile id:", error);
+      return;
+    } 
+    setProfileId(data.id);
+    setUsername(data.username)
+  }
+
+  const fetchUserReaction = async () => {
+    if (!profileId) return;
+    
+    const { data, error } = await supabase
+      .from("user_post_reactions")
+      .select("*")
+      .eq("profile_id", profileId)
+      .eq("post_id", postId)
+      .maybeSingle();
+    
+    if (error) {
+      console.log("Error fetching user reaction:", error);
+      return;
+    }
+    
+    if (data) {
+      setUserReactions({
+        [postId]: {
+          leafs: data.leafs || 0,
+          goings: data.goings || 0,
+          recycles: data.recycles || 0
+        }
+      });
+    }
+  };
+
   const handleLeafGoingRecycle = async (type) => {
-    if (!post || !post.post_stats || post.post_stats.length === 0) return;
+    if (!profileId || !post || !post.post_stats || post.post_stats.length === 0) return;
 
     const stats = post.post_stats[0];
-    let updateData = {};
+    const currentReactions = userReactions[postId] || { leafs: 0, goings: 0, recycles: 0 };
+    const currentValue = currentReactions[type];
+    const newValue = currentValue === 1 ? 0 : 1;
+    const statChange = newValue === 1 ? 1 : -1;
+    
+    const updatedReactions = {
+      ...currentReactions,
+      [type]: newValue
+    };
+    
+    setUserReactions(prev => ({
+      ...prev,
+      [postId]: updatedReactions
+    }));
+    
+    setPost(prevPost => ({
+      ...prevPost,
+      post_stats: [{
+        ...stats,
+        [type]: stats[type] + statChange
+      }]
+    }));
 
-    if (type === 'leaf') {
+    let updateStatsData = { [type]: stats[type] + statChange };
 
-      if (userLeaf) {
-        updateData = { leafs: stats.leafs - 1 };
-        setUserLeaf(!userLeaf)
-      } else {
-        updateData = { leafs: stats.leafs + 1 };
-        setUserLeaf(!userLeaf)
-      }
-
-    } else if (type === 'going') {
-      
-      if (userGoing) {
-        updateData = { goings: stats.goings - 1 };
-        setUserGoing(!userGoing)
-      } else {
-        updateData = { goings: stats.goings + 1 };
-        setUserGoing(!userGoing)
-      }
-    } else if (type === 'recycle') {
-    //   updateData = { recycles: stats.recycles + 1 };
-
-      if (userRecycle) {
-        updateData = { recycles: stats.recycles - 1 };
-        setUserRecycle(!userRecycle)
-      } else {
-        updateData = { recycles: stats.recycles + 1 };
-        setUserRecycle(!userRecycle)
-      }
-      
-    }
-
-    const { error } = await supabase
+    const { error: statsError } = await supabase
       .from('post_stats')
-      .update(updateData)
+      .update(updateStatsData)
       .eq('id', stats.id);
 
-    if (error) {
-      console.log("Error updating stats:", error);
+    if (statsError) {
+      console.log("Error updating post_stats:", statsError);
+      setUserReactions(prev => ({
+        ...prev,
+        [postId]: currentReactions
+      }));
+      fetchPost();
       return;
     }
 
-    // Refresh post data
-    fetchPost();
-  };
+    const { error: reactionError } = await supabase
+      .from('user_post_reactions')
+      .upsert(
+        {
+          profile_id: profileId,
+          post_id: postId,
+          leafs: updatedReactions.leafs,
+          goings: updatedReactions.goings,
+          recycles: updatedReactions.recycles
+        },
+        {
+          onConflict: 'profile_id,post_id'
+        }
+      );
+
+    if (reactionError) {
+      console.log("Error updating user reactions:", reactionError);
+      setUserReactions(prev => ({
+        ...prev,
+        [postId]: currentReactions
+      }));
+      fetchPost();
+    }
+  }
+
+  const fetchPostComments = async () => {
+    const {data, error} = await supabase
+      .from("post_comments")
+      .select('*')
+      .eq("post_id", postId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.log("Error fetching comments", error)
+      return;
+    }
+
+    setComments(data || [])
+  }
+
+  const handleUploadComment = async (e) => {
+    if (!e.trim()) return;
+    
+    const {error} = await supabase.from("post_comments").insert({
+        content: e,
+        post_id: postId,
+        profile_id: profileId,
+        username: username
+      }
+    )
+    
+    if(error) {
+      console.log("Error uploading comment ", error)
+    } else {
+      setInputComment("");
+      fetchPostComments();
+    }
+  }
 
   useEffect(() => {
-    
     if (!loading && !user) {
       navigate("/login");
     }
 
     if (!loading && user) {
       fetchPost();
+      fetchProfileId();
     }
-    
   }, [postId, user, loading]);
+
+  useEffect(() => {
+    if (profileId) {
+      fetchUserReaction();
+      fetchPostComments();
+    }
+  }, [profileId]);
 
   if (!user || !post) {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
-
   }
 
   const stats = post.post_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
+  const userReacted = userReactions[postId] || { leafs: 0, goings: 0, recycles: 0 };
 
   return (
     <div className="profile-outer">
-
       <div className="profile-page-content">
-        {err && <p style={{ color: 'red' }}>{err}</p>}
-
-        {/* <button 
-          onClick={() => navigate('/homepage')}
-          style={{ marginBottom: '20px', padding: '10px 20px', cursor: 'pointer' }}
-        >
-          ← Back to Feed
-        </button> */}
-
-        <Card style={{ width: '70%', height: '100%', margin: '0 auto' }}>
-          <Card.Body>
-            <div style={{ marginBottom: '20px' }}>
-              <h2>{post.title}</h2>
-              {author && (
-                <p style={{ color: '#666', fontSize: '14px' }}>
-                  Posted by <strong>@{author.username}</strong> on {new Date(post.created_at).toLocaleString()}
-                </p>
+        <Card>
+          <Card.Body className="postview-card-body">
+            
+            {/* Left side - Image and Post Info (65%) */}
+            <div className="image-and-info-container">
+              {post.image_url && (
+                <img
+                  src={post.image_url}
+                  alt="Post"
+                  className="post-img"
+                />
               )}
+
+              {/* Buttons below image */}
+              <div className="buttons-container">
+                <button 
+                  onClick={() => handleLeafGoingRecycle('leafs')}
+                  className={userReacted.leafs ? 'reaction-btn active-leaf' : 'reaction-btn'}
+                >
+                  🍃 Leaf ({stats.leafs})
+                </button>
+                <button 
+                  onClick={() => handleLeafGoingRecycle('goings')}
+                  className={userReacted.goings ? 'reaction-btn active-going' : 'reaction-btn'}
+                >
+                  🚶 Going ({stats.goings})
+                </button>
+                <button 
+                  onClick={() => handleLeafGoingRecycle('recycles')}
+                  className={userReacted.recycles ? 'reaction-btn active-recycle' : 'reaction-btn'}
+                >
+                  ♻️ Recycle ({stats.recycles})
+                </button>
+              </div>
+
+              {/* Post info below buttons */}
+              <div className="post-info-container">
+                {author && (
+                  <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
+                    <strong>@{author.username}</strong> • {new Date(post.created_at).toLocaleString()}
+                  </p>
+                )}
+
+                <h3 className="post-title">{post.title}</h3>
+
+                <div className="post-location">
+                  <p><strong>Location:</strong> {post.location}</p>
+                  <p><strong>Scale:</strong> {post.scale}</p>
+                </div>
+
+                <div className='post-caption'>
+                  <p><strong>Caption:</strong></p>
+                  <p>{post.caption}</p>
+                </div>
+              </div>
             </div>
 
-            {post.image_url && (
-              <img
-                src={post.image_url}
-                alt="Post"
-                style={{ 
-                  width: "100%", 
-                  maxHeight: "500px", 
-                  borderRadius: "12px", 
-                  marginBottom: "20px", 
-                  objectFit: "contain"
-                }}
-              />
-            )}
+            {/* Right side - Comments (35%) */}
+            <div className="comments-container-main">
+              <h4 style={{ marginBottom: '15px' }}>Comments</h4>
+              
+              <div className="comments-list">
+                {comments.length === 0 ? (
+                  <p style={{ color: '#999', fontStyle: 'italic' }}>No comments yet...</p>
+                ) : (
+                  comments.map((c) => (
+                    <div key={c.id} className="comment-item">
+                      <p className="comment-header">
+                        <strong>@{c.username}</strong> • <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                      </p>
+                      <p className="comment-content">{c.content}</p>
+                    </div>
+                  ))
+                )}
+              </div>
 
-            <div style={{ marginTop: '20px' }}>
-              <p><strong>Caption:</strong></p>
-              <p style={{ fontSize: '16px', lineHeight: '1.6' }}>{post.caption}</p>
+              {/* Comment input at bottom */}
+              <div className="comment-input-container">
+                <input
+                  placeholder="Add a comment"
+                  value={inputComment}
+                  onChange={(e) => setInputComment(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUploadComment(inputComment);
+                    }
+                  }}
+                  className="comment-input"
+                />
+                
+                <button 
+                  onClick={() => handleUploadComment(inputComment)}
+                  className="comment-btn"
+                >
+                  Comment
+                </button>
+              </div>
             </div>
-
-            <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-              <p><strong>Location:</strong> {post.location}</p>
-              <p><strong>Scale:</strong> {post.scale}</p>
-            </div>
-
-            <div style={{ 
-              display: 'flex', 
-              gap: '15px', 
-              marginTop: '30px',
-              marginBottom: '30px',
-              paddingTop: '20px',
-              borderTop: '1px solid #ddd'
-            }}>
-              <button 
-                onClick={() => handleLeafGoingRecycle('leaf')}
-                style={{ 
-                  padding: '10px 20px', 
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  border: '1px solid #4caf50',
-                  borderRadius: '8px',
-                  background: 'white',
-                  marginBottom: '50px',
-                }}
-              >
-                🍃 Leaf ({stats.leafs})
-              </button>
-              <button 
-                onClick={() => handleLeafGoingRecycle('going')}
-                style={{ 
-                  padding: '10px 20px', 
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  border: '1px solid #2196f3',
-                  borderRadius: '8px',
-                  background: 'white',
-                  marginBottom: '50px'
-                }}
-              >
-                🚶 Going ({stats.goings})
-              </button>
-              <button 
-                onClick={() => handleLeafGoingRecycle('recycle')}
-                style={{ 
-                  padding: '10px 20px', 
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  border: '1px solid #ff9800',
-                  borderRadius: '8px',
-                  background: 'white',
-                  marginBottom: '50px'
-                }}
-              >
-                ♻️ Recycle ({stats.recycles})
-              </button>
-            </div>
+              
           </Card.Body>
         </Card>
       </div>
