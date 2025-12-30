@@ -1,15 +1,12 @@
-# Web Development Final Project - Project Green
+# TouchGrass: An Environmental Post
 
 Submitted by: **Prativa Khatiwada**
 
 This web app: **A community board to bring people together through environmental volunteer work**
 
-Time spent: **13** hours spent in total
-
 ## Required Features
 
 The following **required** functionality is completed:
-
 
 - [x] **Web app includes a create form that allows the user to create posts**
   - [x] Form requires users to add a post title
