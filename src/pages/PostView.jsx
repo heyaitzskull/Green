@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "/src/lib/supabaseClient";
+import { Link } from "react-router-dom";
 import Card from 'react-bootstrap/Card';
 import { useAuth } from "../context/AuthContext";
 import "./PostView.css";
@@ -13,8 +14,10 @@ const PostView = () => {
   const [profileId, setProfileId] = useState(null);
   const [username, setUsername] = useState(null);
   const [userReactions, setUserReactions] = useState({});
-  const [comments, setComments] = useState([])
+  const [comments, setComments] = useState([]);
   const [inputComment, setInputComment] = useState("");
+  const [canEdit, setCanEdit] = useState(false);
+  const [isActive, setIsActive] = useState(false);
   
   const { postId } = useParams();
   const navigate = useNavigate();
@@ -27,7 +30,7 @@ const PostView = () => {
         post_stats (
           id,
           leafs,
-          goings,
+          joins,
           recycles
         )
       `)
@@ -41,6 +44,7 @@ const PostView = () => {
     }
 
     setPost(data);
+    setIsActive(data.is_active)
 
     // Fetch the author's profile
     const { data: authorData, error: authorError } = await supabase
@@ -54,6 +58,13 @@ const PostView = () => {
     } else {
       setAuthor(authorData);
     }
+
+    if (user && user.id === data.profile_id) {
+      setCanEdit(true);
+    } else {
+      setCanEdit(false);
+    }
+
   };
 
   const fetchProfileId = async () => {
@@ -92,18 +103,18 @@ const PostView = () => {
       setUserReactions({
         [postId]: {
           leafs: data.leafs || 0,
-          goings: data.goings || 0,
+          joins: data.joins || 0,
           recycles: data.recycles || 0
         }
       });
     }
   };
 
-  const handleLeafGoingRecycle = async (type) => {
+  const handleLeafJoinRecycle = async (type) => {
     if (!profileId || !post || !post.post_stats || post.post_stats.length === 0) return;
 
     const stats = post.post_stats[0];
-    const currentReactions = userReactions[postId] || { leafs: 0, goings: 0, recycles: 0 };
+    const currentReactions = userReactions[postId] || { leafs: 0, joins: 0, recycles: 0 };
     const currentValue = currentReactions[type];
     const newValue = currentValue === 1 ? 0 : 1;
     const statChange = newValue === 1 ? 1 : -1;
@@ -150,7 +161,7 @@ const PostView = () => {
           profile_id: profileId,
           post_id: postId,
           leafs: updatedReactions.leafs,
-          goings: updatedReactions.goings,
+          joins: updatedReactions.joins,
           recycles: updatedReactions.recycles
         },
         {
@@ -202,6 +213,31 @@ const PostView = () => {
     }
   }
 
+  const handleActivePost = async (e) => {
+
+    //user is marking post as complete, so post is no longer active
+    if (e === "complete") {
+      setIsActive(false)
+    //user is marking post back to incomplete, so post is now active again
+    } else if (e === "incomplete") {
+      setIsActive(true)
+    }
+    
+    const newActiveState = e === "complete" ? false : true;
+
+    const {data, error} = await supabase
+      .from("posts")
+      .update({is_active: newActiveState})
+      .eq('id', postId)
+    
+    if (error) {
+      console.log("Error updating post status:", error);
+      setIsActive(!newActiveState);
+
+    }
+
+  }
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
@@ -224,8 +260,8 @@ const PostView = () => {
     return <h2 style={{display:'flex', justifyContent:'center', textAlign:'center'}}>Loading...</h2>;
   }
 
-  const stats = post.post_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
-  const userReacted = userReactions[postId] || { leafs: 0, goings: 0, recycles: 0 };
+  const stats = post.post_stats?.[0] || { leafs: 0, joins: 0, recycles: 0 };
+  const userReacted = userReactions[postId] || { leafs: 0, joins: 0, recycles: 0 };
 
   return (
     <div className="profile-outer">
@@ -244,36 +280,76 @@ const PostView = () => {
               )}
 
               {/* Buttons below image */}
-              <div className="buttons-container">
-                <button 
-                  onClick={() => handleLeafGoingRecycle('leafs')}
-                  className={userReacted.leafs ? 'reaction-btn active-leaf' : 'reaction-btn'}
-                >
-                  🍃 Leaf ({stats.leafs})
-                </button>
-                <button 
-                  onClick={() => handleLeafGoingRecycle('goings')}
-                  className={userReacted.goings ? 'reaction-btn active-going' : 'reaction-btn'}
-                >
-                  🚶 Going ({stats.goings})
-                </button>
-                <button 
-                  onClick={() => handleLeafGoingRecycle('recycles')}
-                  className={userReacted.recycles ? 'reaction-btn active-recycle' : 'reaction-btn'}
-                >
-                  ♻️ Recycle ({stats.recycles})
-                </button>
+              <div className="buttons-container-main">
+
+                <div className="buttons-container">
+                  <button 
+                    onClick={() => handleLeafJoinRecycle('leafs')}
+                    className={userReacted.leafs ? 'reaction-btn active-leaf' : 'reaction-btn'}
+                  >
+                    🍃 Leaf ({stats.leafs})
+                  </button>
+                  <button 
+                    onClick={() => handleLeafJoinRecycle('joins')}
+                    className={userReacted.joins ? 'reaction-btn active-Join' : 'reaction-btn'}
+                  >
+                    🚶 Join ({stats.joins})
+                  </button>
+                  <button 
+                    onClick={() => handleLeafJoinRecycle('recycles')}
+                    className={userReacted.recycles ? 'reaction-btn active-recycle' : 'reaction-btn'}
+                  >
+                    ♻️ Recycle ({stats.recycles})
+                  </button>
+                </div>
+
+                <div>
+
+                  {/* maybe move this to when post is edited to let user active it again */}
+                  {canEdit && (isActive ? (
+                        <button className="edit-btn" onClick={() => handleActivePost("complete")}>Mark Complete</button>
+                        
+                      ) : (
+                        <button className="edit-btn" onClick={() => handleActivePost("incomplete")}>Mark Active</button>
+                      )
+
+                    )}
+
+                  {post.is_active ? (
+                    <p style={{color:"green", fontSize:"20px", fontWeight:"bold"}}>Active</p>
+                  ): (
+                    <p style={{color:"blue", fontSize:"20px", fontWeight:"bold"}}>Complete</p>
+                  )
+                  }
+                    
+
+                </div>
+
+                
               </div>
 
               {/* Post info below buttons */}
               <div className="post-info-container">
-                {author && (
-                  <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
-                    <strong>@{author.username}</strong> • {new Date(post.created_at).toLocaleString()}
-                  </p>
-                )}
+
+                <div className="username-edit-container">
+                  {author && (
+                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
+                      <strong>@{author.username}</strong> • {new Date(post.created_at).toLocaleString([], {hour: '2-digit', minute: '2-digit'})}
+                    </p>
+                  )}
+
+                  {canEdit === true ? (
+                    <button className="edit-btn">Edit</button>
+                    ) : (
+                      <p></p>
+                    )
+                  
+                  }
+                  
+                </div>
 
                 <h3 className="post-title">{post.title}</h3>
+                
 
                 <div className="post-location">
                   <p><strong>Location:</strong> {post.location}</p>
@@ -298,7 +374,11 @@ const PostView = () => {
                   comments.map((c) => (
                     <div key={c.id} className="comment-item">
                       <p className="comment-header">
-                        <strong>@{c.username}</strong> • <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
+
+                      <Link className="users-comments" to ={`/profilepage/${c.username}`}>
+                        <strong>@{c.username}</strong></Link> • 
+                        <span className="comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                      
                       </p>
                       <p className="comment-content">{c.content}</p>
                     </div>

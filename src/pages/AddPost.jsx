@@ -150,7 +150,7 @@ const AddPost = () => {
             .insert({
             post_id: post.id,
             profile_id: user.id,
-            goings: 0,
+            joins: 0,
             leafs: 0,
             recycles: 0,
         });

@@ -27,6 +27,17 @@
     border-radius: 8px;
     margin-bottom: 15px;
 }
+.username-edit-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.buttons-container-main {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
 
 .buttons-container {
     display: flex;
@@ -124,6 +135,15 @@
     margin-bottom: 15px;
     padding-right: 10px;
 }
+
+.users-comments {
+    text-decoration: none;
+}
+
+.users-comments:hover {
+    text-decoration: none;
+}
+
 
 .comment-item {
     padding: 10px;

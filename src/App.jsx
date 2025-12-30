@@ -48,11 +48,11 @@ function App() {
       element: <AddPost />,
     },
     {
-      path: "/profilepage",
+      path: "/profilepage/:username",
       element: <ProfilePage />,
     },
     {
-      path: "/postview/:postId",
+      path: "/postview/:postTitle/:postId",
       element: <PostView />,
     },
     {
@@ -142,7 +142,7 @@ function App() {
           <menu role="tablist" aria-label="Tabs Template">
             <button role="tab" aria-controls="tab-A"><Link to="/homepage">Feed</Link></button>
             <button role="tab" aria-controls="tab-B"><Link to="/addpost">Add Post</Link></button>
-            <button role="tab" aria-controls="tab-C"><Link to='/profilepage'>Profile</Link></button>
+            <button role="tab" aria-controls="tab-C"><Link to={`/profilepage/${profile?.username}`}>Profile</Link></button>
             <button role="tab" aria-controls="tab-D" onClick={handleLogout}><Link to="/login">Logout</Link></button>
           </menu>
         </section>

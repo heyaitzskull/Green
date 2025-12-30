@@ -7,35 +7,44 @@ import Select from 'react-select'
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-//comments on each post
+//comments on each post - DONE
+//postview: fix reaction, be able to view/add comments - DONE
 
 //FOR EACH POST: add active/complete. User should be able to make a post 
-//  complete after creating the post. On their profile, each post has a
-//  sign/icon showing if its complete or active
+//  complete after creating the post. On their profile, user can filter
+//  to show posts by all, active, completed - DONE
 
-//postview: fix reaction, be able to view/add comments
+//profile: be able to visit other's profiles - DONE
 
-//profile: be able to visit other's profiles
+//add post: add a day/time of event; add option for TBD 
+//add post: fix the issue of image sizing. Allow user to crop maybe?
+//  all sizes need to be the same size, need to deal w/ proportionality
 
 //map: when selecting location from map and come back, all info is gone and have to retype it
-
-//map initial location isnt working, always going to vienna: fix
+//map: initial location isnt working, always Joins to vienna: fix
 
 //homepage: initial filter by location if user's locaiton is on,
 //  if user's location is off, allow user to manually input city/state/address etc...
 
-//add post: add a day/time of event; add option for TBD 
+//map: add a main map where you can see ALL active posts
 
-//map: add a main map where you can see ALL active posts 
+//search feature to look for other user accounts
+
+//comments: upvote + able to reply to comments, be able to @ people
+//  notification system of upvotes/@'s/comment replies 
+
+//remove logout tab into profile page 
+//login system: add forgot password, change email.. ? 
+
+//CSS fix all pages
 
 const HomePage = () => {
   const {user, loading } = useAuth();
-  const [err, setErr] = useState("");
   const [profileId, setProfileId] = useState(null);
   const [allPosts, setAllPosts] = useState([]);
   const [posts, setPosts] = useState([]);
   
-  // Store user reactions by post ID: { postId: { leafs: 1, goings: 0, recycles: 1 } }
+  // Store user reactions by post ID: { postId: { leafs: 1, joins: 0, recycles: 1 } }
   const [userReactions, setUserReactions] = useState({});
   
   const [filterValue, setFilterValue] = useState("recent")
@@ -47,8 +56,8 @@ const HomePage = () => {
     { value: 'latest', label: 'Latest' },
     { value: 'mostLeafs', label: 'Most leafs' },
     { value: 'leastLeafs', label: 'Least leafs' },
-    { value: 'mostGoing', label: 'Most Going' },
-    { value: 'leastGoing', label: 'Least Going' },
+    { value: 'mostJoins', label: 'Most Joins' },
+    { value: 'leastJoins', label: 'Least Joins' },
   ]
 
   const navigate = useNavigate();
@@ -62,10 +71,11 @@ const HomePage = () => {
         post_stats (
           id,
           leafs,
-          goings,
+          joins,
           recycles
         )
       `)
+      .eq('is_active', true)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -112,7 +122,7 @@ const HomePage = () => {
     data.forEach(reaction => {
       reactionsMap[reaction.post_id] = {
         leafs: reaction.leafs || 0,
-        goings: reaction.goings || 0,
+        joins: reaction.joins || 0,
         recycles: reaction.recycles || 0
       };
     });
@@ -139,17 +149,17 @@ const HomePage = () => {
         const bLeafs = b.post_stats?.[0]?.leafs || 0;
         return aLeafs - bLeafs;
       });
-    } else if (props === "mostGoing") {
+    } else if (props === "mostJoins") {
       sorted = sorted.sort((a, b) => {
-        const aGoings = a.post_stats?.[0]?.goings || 0;
-        const bGoings = b.post_stats?.[0]?.goings || 0;
-        return bGoings - aGoings;
+        const ajoins = a.post_stats?.[0]?.joins || 0;
+        const bjoins = b.post_stats?.[0]?.joins || 0;
+        return bjoins - ajoins;
       });
-    } else if (props === "leastGoing") {
+    } else if (props === "leastJoins") {
       sorted = sorted.sort((a, b) => {
-        const aGoings = a.post_stats?.[0]?.goings || 0;
-        const bGoings = b.post_stats?.[0]?.goings || 0;
-        return aGoings - bGoings;
+        const ajoins = a.post_stats?.[0]?.joins || 0;
+        const bjoins = b.post_stats?.[0]?.joins || 0;
+        return ajoins - bjoins;
       });
     }
     
@@ -157,7 +167,7 @@ const HomePage = () => {
   }
 
   // Optimized reaction handler with optimistic updates
-  const handleLeafGoingRecycle = async (postId, type) => {
+  const handleLeafJoinsRecycle = async (postId, type) => {
     if (!profileId) return;
 
     const post = posts.find(p => p.id === postId);
@@ -166,7 +176,7 @@ const HomePage = () => {
     const stats = post.post_stats[0];
     
     // Get current user reaction from local state (faster than DB query)
-    const currentReactions = userReactions[postId] || { leafs: 0, goings: 0, recycles: 0 };
+    const currentReactions = userReactions[postId] || { leafs: 0, joins: 0, recycles: 0 };
     
     // Determine if toggling on or off
     const currentValue = currentReactions[type];
@@ -244,7 +254,7 @@ const HomePage = () => {
           profile_id: profileId,
           post_id: postId,
           leafs: updatedReactions.leafs,
-          goings: updatedReactions.goings,
+          joins: updatedReactions.joins,
           recycles: updatedReactions.recycles
         },
         {
@@ -366,12 +376,12 @@ const HomePage = () => {
           ) : (
             <div className="post-list">
               {posts.map((post) => {
-                const stats = post.post_stats?.[0] || { leafs: 0, goings: 0, recycles: 0 };
-                const userReacted = userReactions[post.id] || { leafs: 0, goings: 0, recycles: 0 };
+                const stats = post.post_stats?.[0] || { leafs: 0, joins: 0, recycles: 0 };
+                const userReacted = userReactions[post.id] || { leafs: 0, joins: 0, recycles: 0 };
                 
                 return (
                   <Card key={post.id} className="homepage-card">
-                    <Link to={`/postview/${post.id}`} className="card-link">
+                    <Link to={`/postview/${post.title}/${post.id}`} className="card-link">
                       <Card.Body>
                         <Card.Title><strong>{post.title}</strong></Card.Title>
                         <p><em>{post.location}</em></p>
@@ -390,17 +400,17 @@ const HomePage = () => {
 
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                       <button 
-                        onClick={() => handleLeafGoingRecycle(post.id, 'leafs')}
+                        onClick={() => handleLeafJoinsRecycle(post.id, 'leafs')}
                       >
                         {stats.leafs}🍃
                       </button>
                       <button 
-                        onClick={() => handleLeafGoingRecycle(post.id, 'goings')}
+                        onClick={() => handleLeafJoinsRecycle(post.id, 'joins')}
                       >
-                        {stats.goings}🚶
+                        {stats.joins}🚶
                       </button>
                       <button 
-                        onClick={() => handleLeafGoingRecycle(post.id, 'recycles')}
+                        onClick={() => handleLeafJoinsRecycle(post.id, 'recycles')}
                       >
                         {stats.recycles}♻️
                       </button>
